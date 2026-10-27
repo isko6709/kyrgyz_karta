@@ -8,6 +8,9 @@
         "title": "Моголистан",
         "source": "historical-basemaps",
         "snapshotYear": 1400,
+        "matchedNames": [
+          "Chagatai Khanate"
+        ],
         "schematic": false
       },
       "geometry": {

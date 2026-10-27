@@ -8,6 +8,9 @@
         "title": "Государство Саманидов",
         "source": "historical-basemaps",
         "snapshotYear": 900,
+        "matchedNames": [
+          "Samanid Empire"
+        ],
         "schematic": false
       },
       "geometry": {

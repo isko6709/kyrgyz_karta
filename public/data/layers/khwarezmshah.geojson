@@ -8,6 +8,9 @@
         "title": "Государство Хорезмшахов",
         "source": "historical-basemaps",
         "snapshotYear": 1200,
+        "matchedNames": [
+          "Khwarazmian dynasty"
+        ],
         "schematic": false
       },
       "geometry": {

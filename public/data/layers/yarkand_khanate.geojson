@@ -8,6 +8,9 @@
         "title": "Яркендское ханство",
         "from": 1514,
         "to": 1705,
+        "source": "schematic",
+        "snapshotYear": null,
+        "matchedNames": [],
         "schematic": true
       },
       "geometry": {

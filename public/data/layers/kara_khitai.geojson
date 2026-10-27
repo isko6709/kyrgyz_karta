@@ -8,6 +8,9 @@
         "title": "Каракитаи",
         "source": "historical-basemaps",
         "snapshotYear": 1200,
+        "matchedNames": [
+          "Kara Khitai Khaganate"
+        ],
         "schematic": false
       },
       "geometry": {

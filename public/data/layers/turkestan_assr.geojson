@@ -8,6 +8,9 @@
         "title": "Туркестанская АССР",
         "from": 1918,
         "to": 1924,
+        "source": "schematic",
+        "snapshotYear": null,
+        "matchedNames": [],
         "schematic": true
       },
       "geometry": {

@@ -1,0 +1,251 @@
+{
+  "saka_wusun": {
+    "status": "matched",
+    "snapshotYear": -100,
+    "filename": "world_bc100.geojson",
+    "matchedNames": [
+      "Saces"
+    ],
+    "notes": "С полигоном Saces (саки Тянь-Шаня/Семиречья) в world_bc100",
+    "layerId": "saka_wusun",
+    "featureCount": 1
+  },
+  "yenisei_early": {
+    "status": "schematic",
+    "snapshotYear": null,
+    "filename": null,
+    "matchedNames": [],
+    "reason": "Минусинская котловина в -200..840 гг. показана как часть таёжных племён Сибири, без выделения кыргызского каганата",
+    "layerId": "yenisei_early",
+    "featureCount": 1
+  },
+  "turkic_khaganates": {
+    "status": "matched",
+    "snapshotYear": 600,
+    "filename": "world_600.geojson",
+    "matchedNames": [
+      "Göktürks"
+    ],
+    "notes": "Тюркский каганат (Göktürks) в world_600",
+    "layerId": "turkic_khaganates",
+    "featureCount": 1
+  },
+  "yenisei_khaganate": {
+    "status": "schematic",
+    "snapshotYear": null,
+    "filename": null,
+    "matchedNames": [],
+    "reason": "Кыргызский каганат на Верхнем Енисее не выделен в отдельный полигон в снимке 900 г.",
+    "layerId": "yenisei_khaganate",
+    "featureCount": 1
+  },
+  "karakhanid": {
+    "status": "schematic",
+    "snapshotYear": null,
+    "filename": null,
+    "matchedNames": [],
+    "reason": "В снимках 1000 и 1100 гг. регион Тянь-Шаня и Семиречья оставлен неразмеченным (null)",
+    "layerId": "karakhanid",
+    "featureCount": 1
+  },
+  "kara_khitai": {
+    "status": "matched",
+    "snapshotYear": 1200,
+    "filename": "world_1200.geojson",
+    "matchedNames": [
+      "Kara Khitai Khaganate"
+    ],
+    "notes": "Каракитайское ханство (Западное Ляо) в world_1200",
+    "layerId": "kara_khitai",
+    "featureCount": 1
+  },
+  "chagatai_ulus": {
+    "status": "matched",
+    "snapshotYear": 1279,
+    "filename": "world_1279.geojson",
+    "matchedNames": [
+      "Chagatai Khanate"
+    ],
+    "notes": "Улус Чагатая в world_1279",
+    "layerId": "chagatai_ulus",
+    "featureCount": 1
+  },
+  "moghulistan": {
+    "status": "matched",
+    "snapshotYear": 1400,
+    "filename": "world_1400.geojson",
+    "matchedNames": [
+      "Chagatai Khanate"
+    ],
+    "notes": "Восточный Чагатайский улус (Моголистан) в world_1400",
+    "layerId": "moghulistan",
+    "featureCount": 1
+  },
+  "kyrgyz_tianshan": {
+    "status": "schematic",
+    "snapshotYear": null,
+    "filename": null,
+    "matchedNames": [],
+    "reason": "Этническая территория кыргызских племён Тянь-Шаня, не являвшаяся централизованной мировой империей",
+    "layerId": "kyrgyz_tianshan",
+    "featureCount": 1
+  },
+  "dzungar": {
+    "status": "schematic",
+    "snapshotYear": null,
+    "filename": null,
+    "matchedNames": [],
+    "reason": "В снимках 1650–1715 гг. Средняя Азия обозначена обобщённо как central Asian khanates",
+    "layerId": "dzungar",
+    "featureCount": 1
+  },
+  "kokand": {
+    "status": "schematic",
+    "snapshotYear": null,
+    "filename": null,
+    "matchedNames": [],
+    "reason": "В снимках 1800–1880 гг. Коканд объединён в central Asian khanates вместе с Хивой и Бухарой; сохранён точный региональный контур Ферганы",
+    "layerId": "kokand",
+    "featureCount": 1
+  },
+  "russian_turkestan": {
+    "status": "schematic",
+    "snapshotYear": null,
+    "filename": null,
+    "matchedNames": [],
+    "reason": "В 1880 г. полигон Russian Empire охватывает всю Евразию (от Польши до Берингова пролива); использование глобального полигона исказило бы границы Туркестанского генерал-губернаторства на 180°",
+    "layerId": "russian_turkestan",
+    "featureCount": 1
+  },
+  "kirghiz_ao": {
+    "status": "matched",
+    "snapshotYear": 2010,
+    "filename": "world_2010.geojson",
+    "matchedNames": [
+      "Kyrgyzstan"
+    ],
+    "modern": true,
+    "notes": "Официальный полигон KGZ (Natural Earth / world_2010)",
+    "layerId": "kirghiz_ao",
+    "featureCount": 1
+  },
+  "kirghiz_ssr": {
+    "status": "matched",
+    "snapshotYear": 2010,
+    "filename": "world_2010.geojson",
+    "matchedNames": [
+      "Kyrgyzstan"
+    ],
+    "modern": true,
+    "notes": "Официальный полигон KGZ (Natural Earth / world_2010)",
+    "layerId": "kirghiz_ssr",
+    "featureCount": 1
+  },
+  "kyrgyzstan": {
+    "status": "matched",
+    "snapshotYear": 2010,
+    "filename": "world_2010.geojson",
+    "matchedNames": [
+      "Kyrgyzstan"
+    ],
+    "modern": true,
+    "notes": "Официальный полигон KGZ (Natural Earth / world_2010)",
+    "layerId": "kyrgyzstan",
+    "featureCount": 1
+  },
+  "xiongnu": {
+    "status": "matched",
+    "snapshotYear": -200,
+    "filename": "world_bc200.geojson",
+    "matchedNames": [
+      "Xiongnu"
+    ],
+    "notes": "Империя Хунну в world_bc200",
+    "layerId": "xiongnu",
+    "featureCount": 1
+  },
+  "uyghur_khaganate": {
+    "status": "matched",
+    "snapshotYear": 800,
+    "filename": "world_800.geojson",
+    "matchedNames": [
+      "Uyghurs"
+    ],
+    "notes": "Уйгурский каганат в world_800",
+    "layerId": "uyghur_khaganate",
+    "featureCount": 1
+  },
+  "samanid": {
+    "status": "matched",
+    "snapshotYear": 900,
+    "filename": "world_900.geojson",
+    "matchedNames": [
+      "Samanid Empire"
+    ],
+    "notes": "Государство Саманидов в world_900",
+    "layerId": "samanid",
+    "featureCount": 1
+  },
+  "khwarezmshah": {
+    "status": "matched",
+    "snapshotYear": 1200,
+    "filename": "world_1200.geojson",
+    "matchedNames": [
+      "Khwarazmian dynasty"
+    ],
+    "notes": "Государство Хорезмшахов в world_1200",
+    "layerId": "khwarezmshah",
+    "featureCount": 1
+  },
+  "timurid": {
+    "status": "matched",
+    "snapshotYear": 1400,
+    "filename": "world_1400.geojson",
+    "matchedNames": [
+      "Timurid Empire"
+    ],
+    "notes": "Империя Тимуридов в world_1400",
+    "layerId": "timurid",
+    "featureCount": 1
+  },
+  "yarkand_khanate": {
+    "status": "schematic",
+    "snapshotYear": null,
+    "filename": null,
+    "matchedNames": [],
+    "reason": "Таримский бассейн в 1530–1650 гг. не выделен отдельным полигоном в снимках basemaps",
+    "layerId": "yarkand_khanate",
+    "featureCount": 1
+  },
+  "kazakh_khanate": {
+    "status": "matched",
+    "snapshotYear": 1530,
+    "filename": "world_1530.geojson",
+    "matchedNames": [
+      "Quazaq Khanate"
+    ],
+    "notes": "Казахское ханство (Quazaq Khanate) в world_1530",
+    "layerId": "kazakh_khanate",
+    "featureCount": 1
+  },
+  "qing_xinjiang": {
+    "status": "matched",
+    "snapshotYear": 1914,
+    "filename": "world_1914.geojson",
+    "matchedNames": [
+      "Xinjiang"
+    ],
+    "notes": "Цинский Синьцзян в границах провинции Синьцзян в world_1914",
+    "layerId": "qing_xinjiang",
+    "featureCount": 1
+  },
+  "turkestan_assr": {
+    "status": "schematic",
+    "snapshotYear": null,
+    "filename": null,
+    "matchedNames": [],
+    "reason": "В снимке 1920 г. Туркестанская АССР входит в единый массив РСФСР/СССР без границ автономии",
+    "layerId": "turkestan_assr",
+    "featureCount": 1
+  }
+}

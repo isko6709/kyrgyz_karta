@@ -1,58 +1,61 @@
 {
- "type": "FeatureCollection",
- "features": [
-  {
-   "type": "Feature",
-   "properties": {
-    "id": "yenisei_early",
-    "title": "Ранние кыргызы на Верхнем Енисее",
-    "from": -201,
-    "to": 840,
-    "schematic": true
-   },
-   "geometry": {
-    "type": "Polygon",
-    "coordinates": [
-     [
-      [
-       88.5,
-       53.0
-      ],
-      [
-       90.0,
-       54.4
-      ],
-      [
-       92.5,
-       54.3
-      ],
-      [
-       94.5,
-       53.6
-      ],
-      [
-       95.0,
-       52.3
-      ],
-      [
-       93.0,
-       51.3
-      ],
-      [
-       90.0,
-       51.2
-      ],
-      [
-       88.3,
-       51.8
-      ],
-      [
-       88.5,
-       53.0
-      ]
-     ]
-    ]
-   }
-  }
- ]
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "yenisei_early",
+        "title": "Ранние кыргызы на Верхнем Енисее",
+        "from": -201,
+        "to": 840,
+        "source": "schematic",
+        "snapshotYear": null,
+        "matchedNames": [],
+        "schematic": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              88.5,
+              53
+            ],
+            [
+              90,
+              54.4
+            ],
+            [
+              92.5,
+              54.3
+            ],
+            [
+              94.5,
+              53.6
+            ],
+            [
+              95,
+              52.3
+            ],
+            [
+              93,
+              51.3
+            ],
+            [
+              90,
+              51.2
+            ],
+            [
+              88.3,
+              51.8
+            ],
+            [
+              88.5,
+              53
+            ]
+          ]
+        ]
+      }
+    }
+  ]
 }

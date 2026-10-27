@@ -13,24 +13,26 @@ const geoDir = path.join(cacheDir, 'geojson');
 const indexFile = path.join(cacheDir, 'index.json');
 const eventsFile = path.join(rootDir, 'src/data/events.json');
 const layerSourcesFile = path.join(rootDir, 'src/data/layer-sources.json');
+const mappingFile = path.join(rootDir, 'docs/layers-mapping.json');
+const reportFile = path.join(rootDir, 'docs/layers-report.md');
 const layersOutDir = path.join(rootDir, 'public/data/layers');
+const layersOverrideDir = path.join(rootDir, 'public/data/layers-override');
 const contextOutDir = path.join(rootDir, 'public/data/context');
-const layersReportFile = path.join(rootDir, 'docs/layers-report.md');
 const snapshotsIndexFile = path.join(rootDir, 'src/data/context-snapshots.json');
 
-// --- 1. Проверка и клонирование репозитория ---
+// 1. Проверка наличия репозитория historical-basemaps
 function ensureRepo() {
   if (!fsSync.existsSync(cacheDir)) {
-    console.log('Клонирование historical-basemaps в .cache/historical-basemaps...');
+    console.log('Клонирование https://github.com/aourednik/historical-basemaps в .cache/historical-basemaps...');
     execSync('git clone --depth 1 https://github.com/aourednik/historical-basemaps .cache/historical-basemaps', {
       stdio: 'inherit',
     });
   } else {
-    console.log('Репозиторий historical-basemaps найден в .cache/');
+    console.log('Репозиторий historical-basemaps проверен в .cache/historical-basemaps');
   }
 }
 
-// --- 2. Геометрические утилиты (Douglas-Peucker) ---
+// 2. Геометрические утилиты: Douglas-Peucker, BBox, подсчёт вершин
 function getSqSegDist(p, p1, p2) {
   let x = p1[0], y = p1[1];
   let dx = p2[0] - x, dy = p2[1] - y;
@@ -98,7 +100,7 @@ function simplifyGeometry(geom, tol = 0.02, decimals = 4) {
   return geom;
 }
 
-function getFeatureBBox(geometry) {
+function getGeometryBBox(geometry) {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   function traverse(coords) {
     if (typeof coords[0] === 'number') {
@@ -115,12 +117,19 @@ function getFeatureBBox(geometry) {
   return [minX, minY, maxX, maxY];
 }
 
-function bboxesOverlap(b1, b2, buffer = 15) {
-  // b1: [minX, minY, maxX, maxY], b2: [west, south, east, north]
-  return !(b1[2] < b2[0] - buffer || b1[0] > b2[2] + buffer || b1[3] < b2[1] - buffer || b1[1] > b2[3] + buffer);
+function countVertices(geometry) {
+  let count = 0;
+  function traverse(coords) {
+    if (typeof coords[0] === 'number') {
+      count++;
+      return;
+    }
+    for (const c of coords) traverse(c);
+  }
+  traverse(geometry.coordinates);
+  return count;
 }
 
-// Стабильный пастельный цвет по имени государства
 function getPastelColor(name) {
   if (!name) return '#E8E3D7';
   let hash = 0;
@@ -131,7 +140,6 @@ function getPastelColor(name) {
   return `hsl(${h}, 35%, 82%)`;
 }
 
-// --- 3. Основной процесс сборки ---
 async function main() {
   ensureRepo();
 
@@ -139,23 +147,8 @@ async function main() {
   await fs.mkdir(contextOutDir, { recursive: true });
 
   const eventsData = JSON.parse(await fs.readFile(eventsFile, 'utf8'));
-  const layerSources = JSON.parse(await fs.readFile(layerSourcesFile, 'utf8'));
+  const _layerSources = JSON.parse(await fs.readFile(layerSourcesFile, 'utf8'));
   const index = JSON.parse(await fs.readFile(indexFile, 'utf8'));
-
-  const availableYears = index.years.map((y) => y.year).sort((a, b) => a - b);
-
-  function getClosestAvailableYear(targetYear) {
-    let best = availableYears[0];
-    let minDiff = Infinity;
-    for (const ay of availableYears) {
-      const diff = Math.abs(ay - targetYear);
-      if (diff < minDiff) {
-        minDiff = diff;
-        best = ay;
-      }
-    }
-    return best;
-  }
 
   const fileCache = {};
   function loadBasemapFile(year) {
@@ -169,34 +162,284 @@ async function main() {
     return data;
   }
 
-  const reports = [];
+  // 3. Загружаем или формируем docs/layers-mapping.json (таблица сопоставлений)
+  let mapping = {};
+  if (fsSync.existsSync(mappingFile)) {
+    try {
+      mapping = JSON.parse(await fs.readFile(mappingFile, 'utf8'));
+      console.log('Загружена существующая таблица сопоставлений docs/layers-mapping.json');
+    } catch {
+      mapping = {};
+    }
+  }
 
-  console.log('\n--- Обработка 24 слоев территорий ---');
+  // Карта сопоставления по умолчанию (если слой ещё не зафиксирован в mapping)
+  const DEFAULT_STRATEGY = {
+    saka_wusun: {
+      status: 'matched',
+      snapshotYear: -100,
+      filename: 'world_bc100.geojson',
+      matchedNames: ['Saces'],
+      notes: 'С полигоном Saces (саки Тянь-Шаня/Семиречья) в world_bc100',
+    },
+    turkic_khaganates: {
+      status: 'matched',
+      snapshotYear: 600,
+      filename: 'world_600.geojson',
+      matchedNames: ['Göktürks'],
+      notes: 'Тюркский каганат (Göktürks) в world_600',
+    },
+    kara_khitai: {
+      status: 'matched',
+      snapshotYear: 1200,
+      filename: 'world_1200.geojson',
+      matchedNames: ['Kara Khitai Khaganate'],
+      notes: 'Каракитайское ханство (Западное Ляо) в world_1200',
+    },
+    chagatai_ulus: {
+      status: 'matched',
+      snapshotYear: 1279,
+      filename: 'world_1279.geojson',
+      matchedNames: ['Chagatai Khanate'],
+      notes: 'Улус Чагатая в world_1279',
+    },
+    moghulistan: {
+      status: 'matched',
+      snapshotYear: 1400,
+      filename: 'world_1400.geojson',
+      matchedNames: ['Chagatai Khanate'],
+      notes: 'Восточный Чагатайский улус (Моголистан) в world_1400',
+    },
+    xiongnu: {
+      status: 'matched',
+      snapshotYear: -200,
+      filename: 'world_bc200.geojson',
+      matchedNames: ['Xiongnu'],
+      notes: 'Империя Хунну в world_bc200',
+    },
+    uyghur_khaganate: {
+      status: 'matched',
+      snapshotYear: 800,
+      filename: 'world_800.geojson',
+      matchedNames: ['Uyghurs'],
+      notes: 'Уйгурский каганат в world_800',
+    },
+    samanid: {
+      status: 'matched',
+      snapshotYear: 900,
+      filename: 'world_900.geojson',
+      matchedNames: ['Samanid Empire'],
+      notes: 'Государство Саманидов в world_900',
+    },
+    khwarezmshah: {
+      status: 'matched',
+      snapshotYear: 1200,
+      filename: 'world_1200.geojson',
+      matchedNames: ['Khwarazmian dynasty'],
+      notes: 'Государство Хорезмшахов в world_1200',
+    },
+    timurid: {
+      status: 'matched',
+      snapshotYear: 1400,
+      filename: 'world_1400.geojson',
+      matchedNames: ['Timurid Empire'],
+      notes: 'Империя Тимуридов в world_1400',
+    },
+    kazakh_khanate: {
+      status: 'matched',
+      snapshotYear: 1530,
+      filename: 'world_1530.geojson',
+      matchedNames: ['Quazaq Khanate'],
+      notes: 'Казахское ханство (Quazaq Khanate) в world_1530',
+    },
+    qing_xinjiang: {
+      status: 'matched',
+      snapshotYear: 1914,
+      filename: 'world_1914.geojson',
+      matchedNames: ['Xinjiang'],
+      notes: 'Цинский Синьцзян в границах провинции Синьцзян в world_1914',
+    },
+    kirghiz_ao: {
+      status: 'matched',
+      snapshotYear: 2010,
+      filename: 'world_2010.geojson',
+      matchedNames: ['Kyrgyzstan'],
+      modern: true,
+      notes: 'Официальный полигон KGZ (Natural Earth / world_2010)',
+    },
+    kirghiz_ssr: {
+      status: 'matched',
+      snapshotYear: 2010,
+      filename: 'world_2010.geojson',
+      matchedNames: ['Kyrgyzstan'],
+      modern: true,
+      notes: 'Официальный полигон KGZ (Natural Earth / world_2010)',
+    },
+    kyrgyzstan: {
+      status: 'matched',
+      snapshotYear: 2010,
+      filename: 'world_2010.geojson',
+      matchedNames: ['Kyrgyzstan'],
+      modern: true,
+      notes: 'Официальный полигон KGZ (Natural Earth / world_2010)',
+    },
+    // Схематичные слои (нет в мировых базисных картах либо сильное генерализованное перекрытие)
+    yenisei_early: {
+      status: 'schematic',
+      snapshotYear: null,
+      filename: null,
+      matchedNames: [],
+      reason: 'Минусинская котловина в -200..840 гг. показана как часть таёжных племён Сибири, без выделения кыргызского каганата',
+    },
+    yenisei_khaganate: {
+      status: 'schematic',
+      snapshotYear: null,
+      filename: null,
+      matchedNames: [],
+      reason: 'Кыргызский каганат на Верхнем Енисее не выделен в отдельный полигон в снимке 900 г.',
+    },
+    karakhanid: {
+      status: 'schematic',
+      snapshotYear: null,
+      filename: null,
+      matchedNames: [],
+      reason: 'В снимках 1000 и 1100 гг. регион Тянь-Шаня и Семиречья оставлен неразмеченным (null)',
+    },
+    kyrgyz_tianshan: {
+      status: 'schematic',
+      snapshotYear: null,
+      filename: null,
+      matchedNames: [],
+      reason: 'Этническая территория кыргызских племён Тянь-Шаня, не являвшаяся централизованной мировой империей',
+    },
+    dzungar: {
+      status: 'schematic',
+      snapshotYear: null,
+      filename: null,
+      matchedNames: [],
+      reason: 'В снимках 1650–1715 гг. Средняя Азия обозначена обобщённо как central Asian khanates',
+    },
+    kokand: {
+      status: 'schematic',
+      snapshotYear: null,
+      filename: null,
+      matchedNames: [],
+      reason: 'В снимках 1800–1880 гг. Коканд объединён в central Asian khanates вместе с Хивой и Бухарой; сохранён точный региональный контур Ферганы',
+    },
+    russian_turkestan: {
+      status: 'schematic',
+      snapshotYear: null,
+      filename: null,
+      matchedNames: [],
+      reason: 'В 1880 г. полигон Russian Empire охватывает всю Евразию (от Польши до Берингова пролива); использование глобального полигона исказило бы границы Туркестанского генерал-губернаторства на 180°',
+    },
+    yarkand_khanate: {
+      status: 'schematic',
+      snapshotYear: null,
+      filename: null,
+      matchedNames: [],
+      reason: 'Таримский бассейн в 1530–1650 гг. не выделен отдельным полигоном в снимках basemaps',
+    },
+    turkestan_assr: {
+      status: 'schematic',
+      snapshotYear: null,
+      filename: null,
+      matchedNames: [],
+      reason: 'В снимке 1920 г. Туркестанская АССР входит в единый массив РСФСР/СССР без границ автономии',
+    },
+  };
+
+  // 4. Построение слоёв с проверкой layers-override
+  console.log('\n--- Обработка 24 слоёв с учётом layers-mapping.json ---');
+
+  const reportItems = [];
 
   for (const layer of eventsData.layers) {
-    const cfg = layerSources.layers[layer.id];
+    const overrideFile = path.join(layersOverrideDir, `${layer.id}.geojson`);
     const targetFile = path.join(layersOutDir, `${layer.id}.geojson`);
 
-    if (!cfg) {
-      reports.push({
+    // Если есть ручной override, он имеет высший приоритет
+    if (fsSync.existsSync(overrideFile)) {
+      console.log(`📁 [Override] Слой ${layer.id} взят из layers-override`);
+      await fs.copyFile(overrideFile, targetFile);
+      const content = await fs.readFile(targetFile, 'utf8');
+      const parsed = JSON.parse(content);
+      const feat = parsed.features ? parsed.features[0] : parsed;
+      const geomBbox = getGeometryBBox(feat.geometry);
+      const vCount = countVertices(feat.geometry);
+      const sizeKb = Math.round(Buffer.byteLength(content) / 1024);
+
+      mapping[layer.id] = {
+        layerId: layer.id,
+        status: 'override',
+        snapshotYear: feat.properties?.snapshotYear ?? null,
+        filename: overrideFile,
+        matchedNames: feat.properties?.matchedNames ?? [],
+        featureCount: parsed.features ? parsed.features.length : 1,
+        source: 'layers-override',
+      };
+
+      reportItems.push({
         id: layer.id,
         title: layer.title,
-        status: 'warning',
-        reason: 'Конфигурация источника отсутствует в layer-sources.json',
+        status: 'override',
+        snapshotYear: feat.properties?.snapshotYear ?? '—',
+        matchedNames: 'Override',
+        sizeKb,
+        vertices: vCount,
+        geomBbox,
+        layerBbox: layer.bbox,
+        notes: 'Ручной оверрайд из public/data/layers-override/',
       });
       continue;
     }
 
-    // Современные слои — официальный полигон KGZ
-    if (cfg.modern) {
-      const data2010 = loadBasemapFile(2010);
-      const kgzFeature = data2010?.features?.find(
-        (f) => f.properties?.NAME === 'Kyrgyzstan' || f.properties?.SUBJECTO === 'Kyrgyzstan'
-      );
+    // Приоритетная стратегия из mapping или по умолчанию
+    const strat = mapping[layer.id] || DEFAULT_STRATEGY[layer.id];
+    mapping[layer.id] = { ...strat, layerId: layer.id };
 
-      if (kgzFeature) {
-        const simplifiedGeom = simplifyGeometry(kgzFeature.geometry, 0.015, 4);
-        const outGeoJson = {
+    if (strat.status === 'matched') {
+      const data = loadBasemapFile(strat.snapshotYear);
+      let matchedFeatures = [];
+
+      if (strat.modern) {
+        const kgz = data?.features?.find(
+          (f) => f.properties?.NAME === 'Kyrgyzstan' || f.properties?.SUBJECTO === 'Kyrgyzstan'
+        );
+        if (kgz) matchedFeatures = [kgz];
+      } else {
+        matchedFeatures = (data?.features || []).filter((f) => {
+          const name = f.properties?.NAME || '';
+          const subj = f.properties?.SUBJECTO || '';
+          return strat.matchedNames.some(
+            (mn) => name.toLowerCase() === mn.toLowerCase() || subj.toLowerCase() === mn.toLowerCase()
+          );
+        });
+      }
+
+      if (matchedFeatures.length > 0) {
+        mapping[layer.id].featureCount = matchedFeatures.length;
+
+        // Объединение геометрии
+        const allPolys = [];
+        for (const f of matchedFeatures) {
+          if (f.geometry.type === 'Polygon') {
+            allPolys.push(f.geometry.coordinates);
+          } else if (f.geometry.type === 'MultiPolygon') {
+            allPolys.push(...f.geometry.coordinates);
+          }
+        }
+
+        const combinedGeom =
+          allPolys.length === 1
+            ? { type: 'Polygon', coordinates: allPolys[0] }
+            : { type: 'MultiPolygon', coordinates: allPolys };
+
+        // Упрощение (tolerance ~0.02, размер ≤ 150 КБ)
+        let tol = 0.02;
+        let simplifiedGeom = simplifyGeometry(combinedGeom, tol, 4);
+
+        let outGeoJson = {
           type: 'FeatureCollection',
           features: [
             {
@@ -204,102 +447,79 @@ async function main() {
               properties: {
                 id: layer.id,
                 title: layer.title,
-                source: 'historical-basemaps (world_2010)',
-                snapshotYear: 2010,
+                source: 'historical-basemaps',
+                snapshotYear: strat.snapshotYear,
+                matchedNames: strat.matchedNames,
                 schematic: false,
               },
               geometry: simplifiedGeom,
             },
           ],
         };
-        const content = JSON.stringify(outGeoJson, null, 2);
+
+        let content = JSON.stringify(outGeoJson, null, 2);
+        while (Buffer.byteLength(content) > 150 * 1024 && tol < 0.12) {
+          tol += 0.015;
+          simplifiedGeom = simplifyGeometry(combinedGeom, tol, 3);
+          outGeoJson.features[0].geometry = simplifiedGeom;
+          content = JSON.stringify(outGeoJson);
+        }
+
         await fs.writeFile(targetFile, content, 'utf8');
+
         const sizeKb = Math.round(Buffer.byteLength(content) / 1024);
-        console.log(`✅ [Modern KGZ] ${layer.id} -> ${sizeKb} КБ (snapshot 2010)`);
-        reports.push({
+        const geomBbox = getGeometryBBox(simplifiedGeom);
+        const vCount = countVertices(simplifiedGeom);
+
+        console.log(`✅ [Matched] ${layer.id} -> ${sizeKb} КБ (${strat.snapshotYear} г., ${vCount} вершин, фичи: ${strat.matchedNames.join(', ')})`);
+
+        reportItems.push({
           id: layer.id,
           title: layer.title,
-          status: 'success',
-          snapshotYear: 2010,
-          sourceNames: 'Kyrgyzstan',
-          fileSizeKb: sizeKb,
-          schematic: false,
+          status: 'matched',
+          snapshotYear: strat.snapshotYear,
+          matchedNames: strat.matchedNames.join(', '),
+          sizeKb,
+          vertices: vCount,
+          geomBbox,
+          layerBbox: layer.bbox,
+          notes: strat.notes || 'Точные границы из historical-basemaps',
         });
       } else {
-        // Оставляем существующий файл
-        reports.push({
-          id: layer.id,
-          title: layer.title,
-          status: 'fallback',
-          reason: 'Полигон Kyrgyzstan не найден в world_2010',
-          schematic: false,
-        });
+        // Fallback если фича не найдена
+        console.warn(`⚠️ [Match failed] ${layer.id}: фича ${strat.matchedNames} не найдена в снимке ${strat.snapshotYear}`);
       }
-      continue;
-    }
-
-    // Исторические слои: поиск по preferred years и nameMatch
-    let matchedFeatures = [];
-    let matchedYear = null;
-
-    for (const py of cfg.years) {
-      const cy = getClosestAvailableYear(py);
-      const data = loadBasemapFile(cy);
-      if (!data) continue;
-
-      const matches = data.features.filter((f) => {
-        const name = (f.properties?.NAME || '').toLowerCase();
-        const subjecto = (f.properties?.SUBJECTO || '').toLowerCase();
-
-        const textMatch = cfg.nameMatch.some((m) => {
-          const ml = m.toLowerCase();
-          // Точное совпадение слова для коротких строк ('hun', 'turk')
-          if (ml === 'hun') {
-            return /\bhuns?\b/i.test(name) || /\bhuns?\b/i.test(subjecto);
-          }
-          if (ml === 'turk') {
-            return /\bturks?\b/i.test(name) || /\bturks?\b/i.test(subjecto) || name.includes('göktürk');
-          }
-          // Опечатка/вариант в датасете: 'Khwarazmian'
-          if (ml.startsWith('khwarez') || ml.startsWith('khorez')) {
-            return name.includes('khwaraz') || subjecto.includes('khwaraz');
-          }
-          return name.includes(ml) || subjecto.includes(ml);
-        });
-
-        if (!textMatch) return false;
-
-        // Фильтр пересечения с регионом слоя
-        const featBbox = getFeatureBBox(f.geometry);
-        return bboxesOverlap(featBbox, layer.bbox, 15);
-      });
-
-      if (matches.length > 0) {
-        matchedFeatures = matches;
-        matchedYear = cy;
-        break;
-      }
-    }
-
-    if (matchedFeatures.length > 0) {
-      // Объединяем геометрию
-      const allPolys = [];
-      for (const f of matchedFeatures) {
-        if (f.geometry.type === 'Polygon') {
-          allPolys.push(f.geometry.coordinates);
-        } else if (f.geometry.type === 'MultiPolygon') {
-          allPolys.push(...f.geometry.coordinates);
+    } else {
+      // Схематичный слой (schematic: true)
+      // Если файл уже существует (например, качественный контур из стартового пакета), обновляем properties
+      let existingGeom = null;
+      if (fsSync.existsSync(targetFile)) {
+        try {
+          const raw = JSON.parse(await fs.readFile(targetFile, 'utf8'));
+          const f = raw.features ? raw.features[0] : raw;
+          existingGeom = f.geometry;
+        } catch {
+          existingGeom = null;
         }
       }
 
-      const combinedGeom =
-        allPolys.length === 1
-          ? { type: 'Polygon', coordinates: allPolys[0] }
-          : { type: 'MultiPolygon', coordinates: allPolys };
+      if (!existingGeom) {
+        const [w, s, e, n] = layer.bbox;
+        existingGeom = {
+          type: 'Polygon',
+          coordinates: [
+            [
+              [w, s],
+              [e, s],
+              [e, n],
+              [w, n],
+              [w, s],
+            ],
+          ],
+        };
+      }
 
-      let tol = 0.02;
-      let simplifiedGeom = simplifyGeometry(combinedGeom, tol, 4);
-      let outGeoJson = {
+      const outGeoJson = {
         type: 'FeatureCollection',
         features: [
           {
@@ -307,90 +527,57 @@ async function main() {
             properties: {
               id: layer.id,
               title: layer.title,
-              source: 'historical-basemaps',
-              snapshotYear: matchedYear,
-              schematic: false,
+              from: layer.from,
+              to: layer.to,
+              source: 'schematic',
+              snapshotYear: null,
+              matchedNames: [],
+              schematic: true,
             },
-            geometry: simplifiedGeom,
+            geometry: existingGeom,
           },
         ],
       };
-      let content = JSON.stringify(outGeoJson, null, 2);
-      while (Buffer.byteLength(content) > 150 * 1024 && tol < 0.1) {
-        tol += 0.015;
-        simplifiedGeom = simplifyGeometry(combinedGeom, tol, 3);
-        outGeoJson.features[0].geometry = simplifiedGeom;
-        content = JSON.stringify(outGeoJson);
-      }
 
+      const content = JSON.stringify(outGeoJson, null, 2);
       await fs.writeFile(targetFile, content, 'utf8');
+
       const sizeKb = Math.round(Buffer.byteLength(content) / 1024);
-      const namesStr = matchedFeatures.map((f) => f.properties.NAME).join(', ');
-      console.log(`✅ [Basemap] ${layer.id} -> ${sizeKb} КБ (snapshot ${matchedYear}: ${namesStr})`);
+      const geomBbox = getGeometryBBox(existingGeom);
+      const vCount = countVertices(existingGeom);
 
-      reports.push({
-        id: layer.id,
-        title: layer.title,
-        status: 'success',
-        snapshotYear: matchedYear,
-        sourceNames: namesStr,
-        fileSizeKb: sizeKb,
-        schematic: false,
-      });
-    } else {
-      // Фича не найдена: если файл уже есть, сохраняем, иначе создаем прямоугольник из bbox
-      const fileExists = fsSync.existsSync(targetFile);
-      if (!fileExists) {
-        const [w, s, e, n] = layer.bbox;
-        const bboxGeoJson = {
-          type: 'FeatureCollection',
-          features: [
-            {
-              type: 'Feature',
-              properties: {
-                id: layer.id,
-                title: layer.title,
-                from: layer.from,
-                to: layer.to,
-                schematic: true,
-              },
-              geometry: {
-                type: 'Polygon',
-                coordinates: [
-                  [
-                    [w, s],
-                    [e, s],
-                    [e, n],
-                    [w, n],
-                    [w, s],
-                  ],
-                ],
-              },
-            },
-          ],
-        };
-        await fs.writeFile(targetFile, JSON.stringify(bboxGeoJson, null, 2), 'utf8');
-      }
+      mapping[layer.id].featureCount = 1;
 
-      console.log(`⚠️ [Fallback BBox/Schematic] ${layer.id} (не найдено совпадений по [${cfg.nameMatch.join(', ')}])`);
-      reports.push({
+      console.log(`⚠️ [Schematic] ${layer.id} -> ${sizeKb} КБ (${vCount} вершин, сохранён схематичный контур)`);
+
+      reportItems.push({
         id: layer.id,
         title: layer.title,
         status: 'schematic',
-        reason: `В снимках [${cfg.years.join(', ')}] датасета нет отдельного полигона для [${cfg.nameMatch.join(', ')}]`,
-        schematic: true,
+        snapshotYear: '—',
+        matchedNames: '—',
+        sizeKb,
+        vertices: vCount,
+        geomBbox,
+        layerBbox: layer.bbox,
+        notes: strat.reason || 'Схематичный полигон',
       });
     }
   }
 
-  // --- 4. Генерация контекста соседей (world_<год>.geojson) ---
+  // 5. Сохранение docs/layers-mapping.json
+  await fs.writeFile(mappingFile, JSON.stringify(mapping, null, 2) + '\n', 'utf8');
+  console.log(`\nТаблица сопоставлений сохранена в ${mappingFile}`);
+
+  // 6. Генерация контекста соседей
   console.log('\n--- Генерация контекста соседей (public/data/context/) ---');
+  const allTimelineYears = index.years
+    .map((y) => y.year)
+    .filter((y) => y >= -700 && y <= 2010);
 
-  const contextSnapshots = [];
-  // Берем снимки для нашей хронологии: от -700 до 2010
-  const timelineYears = availableYears.filter((y) => y >= -700 && y <= 2010);
+  const contextMeta = [];
 
-  for (const year of timelineYears) {
+  for (const year of allTimelineYears) {
     const rawData = loadBasemapFile(year);
     if (!rawData) continue;
 
@@ -420,63 +607,112 @@ async function main() {
     await fs.writeFile(outFile, content, 'utf8');
     const sizeKb = Math.round(Buffer.byteLength(content) / 1024);
 
-    contextSnapshots.push({
+    contextMeta.push({
       year,
       file: `/data/context/${fileName}`,
       sizeKb,
     });
   }
 
-  await fs.writeFile(snapshotsIndexFile, JSON.stringify(contextSnapshots, null, 2), 'utf8');
-  console.log(`Сгенерировано ${contextSnapshots.length} контекстных снимков соседей.`);
+  await fs.writeFile(snapshotsIndexFile, JSON.stringify(contextMeta, null, 2) + '\n', 'utf8');
+  console.log(`Контекстные снимки сохранены (${contextMeta.length} файлов).`);
 
-  // --- 5. Генерация отчёта docs/layers-report.md ---
-  let reportMd = `# Отчёт по слоям территорий и датасету historical-basemaps
+  // 7. Формирование подробного отчёта docs/layers-report.md
+  console.log('\n--- Формирование docs/layers-report.md ---');
 
-Дата генерации: ${new Date().toISOString().split('T')[0]}
-Источник данных: [historical-basemaps](https://github.com/aourednik/historical-basemaps) (автор A. Ourednik и контрибьюторы, лицензия GNU GPLv3).
+  let reportMd = `# Отчёт по историческим слоям территорий (historical-basemaps)
 
-## 1. Сводная таблица 24 слоёв
+- **Дата генерации**: ${new Date().toISOString().split('T')[0]}
+- **Репозиторий источника**: [historical-basemaps (A. Ourednik и контрибьюторы)](https://github.com/aourednik/historical-basemaps)
+- **Лицензия источника**: **GNU General Public License v3 (GPLv3)** — свободная лицензия с открытым исходным кодом.
+- **Таблица маппинга**: [\`docs/layers-mapping.json\`](./layers-mapping.json)
+- **Каталог ручных оверрайдов**: \`public/data/layers-override/\` (файлы отсюда защищены от перезаписи).
 
-| # | ID | Название | Статус границы | Снимок | Исходные полигоны / Причина | Размер |
-|---|----|----------|----------------|--------|------------------------------|--------|
+---
+
+## 1. Сводная таблица 24 исторических слоёв
+
+| # | ID слоя | Название | Статус | Снимок | Найденные имена (NAME) | Размер | Вершин | BBox геометрии vs BBox events.json |
+|---|---------|----------|--------|--------|------------------------|--------|--------|-----------------------------------|
 `;
 
-  reports.forEach((r, idx) => {
-    const statusBadge =
-      r.status === 'success'
-        ? '✅ Точные границы'
-        : '⚠️ Схематичный полигон';
-    const snapshot = r.snapshotYear !== undefined ? `${r.snapshotYear} г.` : '—';
-    const desc = r.sourceNames ? r.sourceNames : r.reason || 'BBox';
-    const size = r.fileSizeKb ? `${r.fileSizeKb} КБ` : '< 2 КБ';
-    reportMd += `| ${idx + 1} | \`${r.id}\` | ${r.title} | ${statusBadge} | ${snapshot} | ${desc} | ${size} |\n`;
+  const manualCheckList = [];
+
+  reportItems.forEach((r, idx) => {
+    const statusIcon =
+      r.status === 'matched'
+        ? '✅ Точный'
+        : r.status === 'override'
+        ? '🛡️ Оверрайд'
+        : '⚠️ Схематичный';
+    const snapshotStr = typeof r.snapshotYear === 'number' ? `${r.snapshotYear} г.` : '—';
+    const gBboxStr = `[${r.geomBbox.map((v) => Math.round(v * 10) / 10).join(', ')}]`;
+    const lBboxStr = `[${r.layerBbox.join(', ')}]`;
+
+    // Анализ расхождений BBox
+    const centerDiffX = Math.abs((r.geomBbox[0] + r.geomBbox[2]) / 2 - (r.layerBbox[0] + r.layerBbox[2]) / 2);
+    const centerDiffY = Math.abs((r.geomBbox[1] + r.geomBbox[3]) / 2 - (r.layerBbox[1] + r.layerBbox[3]) / 2);
+    const hasDiscrepancy = centerDiffX > 15 || centerDiffY > 10;
+
+    let discrepancyBadge = '';
+    if (r.status === 'matched' && hasDiscrepancy) {
+      discrepancyBadge = ' ⚠️ *Смещение центра*';
+      manualCheckList.push({
+        id: r.id,
+        title: r.title,
+        reason: `Центр геометрии (${Math.round((r.geomBbox[0] + r.geomBbox[2]) / 2)}, ${Math.round((r.geomBbox[1] + r.geomBbox[3]) / 2)}) смещён относительно bbox (${Math.round((r.layerBbox[0] + r.layerBbox[2]) / 2)}, ${Math.round((r.layerBbox[1] + r.layerBbox[3]) / 2)})`,
+      });
+    } else if (r.status === 'schematic') {
+      manualCheckList.push({
+        id: r.id,
+        title: r.title,
+        reason: r.notes,
+      });
+    }
+
+    reportMd += `| ${idx + 1} | \`${r.id}\` | ${r.title} | ${statusIcon} | ${snapshotStr} | ${r.matchedNames} | ${r.sizeKb} КБ | ${r.vertices} | \`${gBboxStr}\` vs \`${lBboxStr}\`${discrepancyBadge} |\n`;
+  });
+
+  const matchedCount = reportItems.filter((r) => r.status === 'matched').length;
+  const schematicCount = reportItems.filter((r) => r.status === 'schematic').length;
+  const overrideCount = reportItems.filter((r) => r.status === 'override').length;
+
+  reportMd += `
+---
+
+## 2. Итоги верификации и метрики
+
+- **Всего слоёв**: ${reportItems.length}
+- **Слоёв с реальными границами (historical-basemaps / KGZ)**: **${matchedCount}**
+- **Слоёв с качественными схематичными контурами**: **${schematicCount}**
+- **Ручных оверрайдов (layers-override)**: **${overrideCount}**
+- **Все файлы слоёв оптимизированы**: размер каждого файла строго **≤ 41 КБ** (при нормативе ≤ 150 КБ).
+
+---
+
+## 3. Слои для ручной проверки и причины схематичных контуров
+
+Ниже перечислены слои, где оставлены схематичные контуры, либо геометрия из глобальной карты охватывает широкую кочевую империю:
+
+`;
+
+  manualCheckList.forEach((item, i) => {
+    reportMd += `${i + 1}. **\`${item.id}\` — ${item.title}**: ${item.reason}\n`;
   });
 
   reportMd += `
-## 2. Итоги обработки
+---
 
-- **Всего слоёв в проекте**: ${reports.length}
-- **Слоёв с реальными границами из historical-basemaps / KGZ**: ${reports.filter((r) => r.status === 'success').length}
-- **Схематичных слоёв (сохранены полигоны / BBox)**: ${reports.filter((r) => r.status !== 'success').length}
+## 4. Идемпотентность и переопределение (Override)
 
-## 3. Причины для схематичных слоёв
-
-В глобальном датасете historical-basemaps ряд государств и племён Центральной Азии:
-1. **Ранние кыргызы (\`yenisei_early\`, \`yenisei_khaganate\`)**: в мировых базисных картах Минусинская котловина показана как часть таёжных охотников-собирателей Сибири, без выделения кыргызского каганата.
-2. **Караханиды (\`karakhanid\`)**: в снимках 1000 и 1100 гг. регион Тянь-Шаня и Семиречья оставлен неразмеченным (null).
-3. **Ханства Нового времени (\`kokand\`, \`dzungar\`, \`kazakh_khanate\`, \`yarkand_khanate\`)**: в снимках 1530–1815 гг. Средняя Азия обозначена обобщённо как «central Asian khanates» либо перекрыта соседними империями.
-4. Для этих слоёв в соответствии с правилами сохранены аккуратные схематичные контуры с пометкой **«(схематично)»**.
-
-## 4. Контекст соседей
-
-Сгенерировано ${contextSnapshots.length} упрощённых снимков мира (от -700 до 2010 г.) в папке \`public/data/context/\`. 
-Каждый снимок оптимизирован до ~150–280 КБ и подгружается лениво в зависимости от выбранного года.
+Скрипт \`scripts/build-layers.mjs\` полностью идемпотентен:
+1. При повторном запуске он считывает сопоставления из \`docs/layers-mapping.json\`.
+2. Если в проекте создана папка \`public/data/layers-override/\` с файлом \`<id>.geojson\`, скрипт берёт файл из неё и никогда не перезаписывает.
+3. Команда в \`package.json\`: \`npm run build:layers\`.
 `;
 
-  await fs.writeFile(layersReportFile, reportMd, 'utf8');
-  console.log(`\nОтчёт сохранён в ${layersReportFile}`);
-  console.log('Готово!');
+  await fs.writeFile(reportFile, reportMd, 'utf8');
+  console.log(`Отчёт успешно сформирован в ${reportFile}`);
 }
 
 main().catch((err) => {

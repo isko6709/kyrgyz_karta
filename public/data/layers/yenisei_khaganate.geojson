@@ -1,66 +1,69 @@
 {
- "type": "FeatureCollection",
- "features": [
-  {
-   "type": "Feature",
-   "properties": {
-    "id": "yenisei_khaganate",
-    "title": "Кыргызский каганат",
-    "from": 840,
-    "to": 924,
-    "schematic": true
-   },
-   "geometry": {
-    "type": "Polygon",
-    "coordinates": [
-     [
-      [
-       86,
-       50.5
-      ],
-      [
-       88,
-       54.5
-      ],
-      [
-       93,
-       56
-      ],
-      [
-       98,
-       55
-      ],
-      [
-       103,
-       52.5
-      ],
-      [
-       104,
-       49
-      ],
-      [
-       100,
-       47
-      ],
-      [
-       94,
-       47.5
-      ],
-      [
-       90,
-       48
-      ],
-      [
-       86.5,
-       49
-      ],
-      [
-       86,
-       50.5
-      ]
-     ]
-    ]
-   }
-  }
- ]
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "yenisei_khaganate",
+        "title": "Кыргызский каганат",
+        "from": 840,
+        "to": 924,
+        "source": "schematic",
+        "snapshotYear": null,
+        "matchedNames": [],
+        "schematic": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              86,
+              50.5
+            ],
+            [
+              88,
+              54.5
+            ],
+            [
+              93,
+              56
+            ],
+            [
+              98,
+              55
+            ],
+            [
+              103,
+              52.5
+            ],
+            [
+              104,
+              49
+            ],
+            [
+              100,
+              47
+            ],
+            [
+              94,
+              47.5
+            ],
+            [
+              90,
+              48
+            ],
+            [
+              86.5,
+              49
+            ],
+            [
+              86,
+              50.5
+            ]
+          ]
+        ]
+      }
+    }
+  ]
 }
