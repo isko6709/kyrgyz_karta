@@ -10,6 +10,8 @@ export interface Layer {
 
 export type Certainty = 'high' | 'medium' | 'debated';
 
+export type FigureType = 'ruler' | 'culture';
+
 export interface HistEvent {
   id: number;
   year: number;            // отрицательные — до н.э.
@@ -39,6 +41,6 @@ export interface Ruler {
   commonsQuery: string;
   certainty: Certainty;
   legendary?: boolean;
-  figureType?: 'culture' | 'ruler' | string;
+  figureType?: FigureType | string;
   note: string;
 }

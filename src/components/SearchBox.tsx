@@ -105,7 +105,7 @@ export function SearchBox() {
               setSearch('');
             }
           }}
-          placeholder="Поиск событий и ханов..."
+          placeholder="Поиск событий, ханов и деятелей культуры..."
           className="w-full pl-8 pr-7 py-1.5 rounded-full bg-white/95 backdrop-blur-md border border-black/15 shadow-sm text-xs text-[#2B2A28] placeholder-[#5E5951] focus:outline-none focus:ring-2 focus:ring-[#2C6466]/40 focus:border-[#2C6466]"
         />
         {search && (
@@ -193,9 +193,13 @@ export function SearchBox() {
                             <span className="text-xs font-semibold text-[#2B2A28] truncate">
                               {ruler.name}
                             </span>
-                            {ruler.figureType === 'culture' && (
-                              <span className="shrink-0 px-1 py-0.2 rounded text-[8.5px] font-medium bg-amber-100 text-amber-900 border border-amber-200">
-                                Культура
+                            {ruler.figureType === 'culture' ? (
+                              <span className="shrink-0 px-1.5 py-0.5 rounded text-[8.5px] font-semibold bg-amber-100 text-amber-900 border border-amber-300">
+                                📜 Культура
+                              </span>
+                            ) : (
+                              <span className="shrink-0 px-1.5 py-0.5 rounded text-[8px] font-medium bg-black/5 text-[#5E5951]">
+                                👑 Правитель
                               </span>
                             )}
                           </div>

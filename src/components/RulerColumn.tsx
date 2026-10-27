@@ -161,12 +161,21 @@ export function RulerColumn() {
                         {/* Аватарка через штатный компонент (внутри getPortrait) */}
                         <RulerAvatar ruler={ruler} size={60} />
 
-                        {/* Бейдж для деятелей культуры */}
-                        {isCulture && (
-                          <span className="mt-1 px-1.5 py-0.5 rounded text-[9.5px] font-medium bg-amber-100 text-amber-900 border border-amber-300/60 shadow-xs">
-                            Культура
+                        {/* Бейдж: деятели культуры показываются отдельным бейджем, а не как правители */}
+                        {isCulture ? (
+                          <span className="mt-1 px-2 py-0.5 rounded-full text-[9.5px] font-semibold bg-amber-100 text-amber-900 border border-amber-300 shadow-xs flex items-center gap-1">
+                            📜 Деятель культуры
+                          </span>
+                        ) : (
+                          <span className="mt-1 px-1.5 py-0.5 rounded-full text-[9px] font-medium text-[#5E5951] bg-black/5">
+                            Правитель
                           </span>
                         )}
+
+                        {/* Роль деятеля */}
+                        <p className="mt-0.5 text-[10px] text-[#5E5951] leading-tight line-clamp-2 px-1 font-normal">
+                          {ruler.role}
+                        </p>
 
                         {/* Годы правления / активности под аватаром */}
                         <span className="mt-1 text-[11px] font-semibold text-[#2B2A28]">
@@ -174,7 +183,7 @@ export function RulerColumn() {
                             ? `${ruler.from < 0 ? Math.abs(ruler.from) + ' до н.э.' : ruler.from} – ${
                                 ruler.to < 0 ? Math.abs(ruler.to) + ' до н.э.' : ruler.to
                               }`
-                            : ''}
+                            : ruler.display}
                         </span>
 
                         {/* Индикатор подсветки слоя */}
@@ -249,9 +258,13 @@ export function RulerColumn() {
                           <span className="text-[11px] font-semibold text-[#2B2A28] leading-tight truncate max-w-[110px]">
                             {ruler.name}
                           </span>
-                          {isCulture && (
-                            <span className="shrink-0 px-1 py-0.2 rounded text-[8.5px] font-medium bg-amber-100 text-amber-900">
-                              Культура
+                          {isCulture ? (
+                            <span className="shrink-0 px-1.5 py-0.2 rounded text-[8.5px] font-semibold bg-amber-100 text-amber-900 border border-amber-300">
+                              📜 Культура
+                            </span>
+                          ) : (
+                            <span className="shrink-0 px-1 py-0.2 rounded text-[8px] font-medium text-[#6B665E] bg-black/5">
+                              Правитель
                             </span>
                           )}
                         </div>
