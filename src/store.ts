@@ -17,6 +17,9 @@ export interface AppState {
   showNeighbors: boolean;
   highlightedLayerId: string | null;
   targetFlyTo: FlyToOptions | null;
+  debugMode: boolean;
+  debugSelectedLayerId: string | null;
+  debugForcedLayerIds: string[];
 
   setYear: (year: number) => void;
   selectEvent: (id: number | null) => void;
@@ -29,6 +32,10 @@ export interface AppState {
   toggleNeighbors: () => void;
   setShowNeighbors: (show: boolean) => void;
   setHighlightedLayerId: (id: string | null) => void;
+  setDebugMode: (debugMode: boolean) => void;
+  setDebugSelectedLayerId: (id: string | null) => void;
+  toggleDebugForcedLayer: (id: string) => void;
+  setDebugForcedLayers: (ids: string[]) => void;
   flyTo: (center: [number, number], zoom?: number, duration?: number) => void;
 }
 
@@ -45,6 +52,12 @@ export const useStore = create<AppState>((set) => ({
   showNeighbors: true,
   highlightedLayerId: null,
   targetFlyTo: null,
+  debugMode:
+    typeof window !== 'undefined' &&
+    (window.location.search.includes('debug=layers') ||
+      window.location.hash.includes('debug=layers')),
+  debugSelectedLayerId: null,
+  debugForcedLayerIds: [],
 
   setYear: (year: number) => {
     const era = eraForYear(year);
@@ -104,6 +117,17 @@ export const useStore = create<AppState>((set) => ({
     set({ showNeighbors }),
   setHighlightedLayerId: (highlightedLayerId: string | null) =>
     set({ highlightedLayerId }),
+  setDebugMode: (debugMode: boolean) => set({ debugMode }),
+  setDebugSelectedLayerId: (debugSelectedLayerId: string | null) =>
+    set({ debugSelectedLayerId }),
+  toggleDebugForcedLayer: (id: string) =>
+    set((state) => ({
+      debugForcedLayerIds: state.debugForcedLayerIds.includes(id)
+        ? state.debugForcedLayerIds.filter((x) => x !== id)
+        : [...state.debugForcedLayerIds, id],
+    })),
+  setDebugForcedLayers: (debugForcedLayerIds: string[]) =>
+    set({ debugForcedLayerIds }),
   flyTo: (center: [number, number], zoom = 7, duration = 1400) =>
     set({ targetFlyTo: { center, zoom, duration } }),
 }));

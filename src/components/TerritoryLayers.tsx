@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Source, Layer, Marker } from 'react-map-gl/maplibre';
 import type { Feature, FeatureCollection } from 'geojson';
-import { layersForYear, eraForYear } from '../lib/data';
+import { layers, layersForYear, eraForYear } from '../lib/data';
 import { useStore } from '../store';
 import { loadLayerGeoJson, getCachedLayer } from '../lib/layersCache';
 
@@ -69,8 +69,20 @@ export function TerritoryLayers() {
   const year = useStore((s) => s.year);
   const highlightedLayerId = useStore((s) => s.highlightedLayerId);
   const setHighlightedLayerId = useStore((s) => s.setHighlightedLayerId);
+  const debugSelectedLayerId = useStore((s) => s.debugSelectedLayerId);
+  const debugForcedLayerIds = useStore((s) => s.debugForcedLayerIds);
 
-  const activeLayers = useMemo(() => layersForYear(year), [year]);
+  const activeLayers = useMemo(() => {
+    const base = layersForYear(year);
+    if (debugForcedLayerIds.length === 0) return base;
+    // В режиме отладки добавляем принудительно включённые слои
+    const baseIds = new Set(base.map((l) => l.id));
+    const forced = layers.filter(
+      (l) => debugForcedLayerIds.includes(l.id) && !baseIds.has(l.id)
+    );
+    return [...base, ...forced];
+  }, [year, debugForcedLayerIds]);
+
   const activeEra = useMemo(() => eraForYear(year), [year]);
   const eraColor = activeEra?.color ?? '#4F8A8B';
 
@@ -104,6 +116,7 @@ export function TerritoryLayers() {
     for (let i = 0; i < activeLayers.length; i++) {
       const l = activeLayers[i];
       const isHighlighted = l.id === highlightedLayerId;
+      const isDebugSelected = l.id === debugSelectedLayerId;
       const cachedEntry = getCachedLayer(l.id);
       const cached = cachedEntry.status === 'loaded' ? cachedEntry.data : null;
 
@@ -123,6 +136,7 @@ export function TerritoryLayers() {
                 borderColor,
                 isFallback: false,
                 isHighlighted,
+                isDebugSelected,
                 layerIndex: i,
               },
             });
@@ -138,6 +152,7 @@ export function TerritoryLayers() {
               borderColor,
               isFallback: false,
               isHighlighted,
+              isDebugSelected,
               layerIndex: i,
             },
           });
@@ -155,6 +170,7 @@ export function TerritoryLayers() {
             borderColor,
             isFallback: true,
             isHighlighted,
+            isDebugSelected,
             layerIndex: i,
           },
           geometry: {
@@ -177,7 +193,7 @@ export function TerritoryLayers() {
       type: 'FeatureCollection',
       features,
     };
-  }, [activeLayers, eraColor, highlightedLayerId]);
+  }, [activeLayers, eraColor, highlightedLayerId, debugSelectedLayerId]);
 
   // Список подписей активных территорий текущего года (заглавными буквами)
   // с защитой от наложения меток друг на друга
@@ -258,6 +274,22 @@ export function TerritoryLayers() {
             ],
             'line-opacity': 0.95,
             'line-opacity-transition': { duration: 500, delay: 0 },
+          }}
+        />
+
+        {/* Красная обводка выбранного слоя в режиме отладки ?debug=layers */}
+        <Layer
+          id="territories-debug-selected-line"
+          type="line"
+          paint={{
+            'line-color': '#EF4444',
+            'line-width': 4.5,
+            'line-opacity': [
+              'case',
+              ['==', ['get', 'isDebugSelected'], true],
+              1.0,
+              0.0,
+            ],
           }}
         />
       </Source>

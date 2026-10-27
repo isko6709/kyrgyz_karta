@@ -18,10 +18,17 @@ export default function App() {
     toggleModernBorders,
   } = useStore();
 
+  const isDebugAllowed =
+    import.meta.env.DEV ||
+    (typeof window !== 'undefined' &&
+      (window.location.search.includes('debug=layers') ||
+        window.location.hash.includes('debug=layers')));
+
   const [showDebugLayers, setShowDebugLayers] = useState(() => {
     return (
-      window.location.search.includes('debug=layers') ||
-      window.location.hash.includes('debug=layers')
+      isDebugAllowed &&
+      (window.location.search.includes('debug=layers') ||
+        window.location.hash.includes('debug=layers'))
     );
   });
 
@@ -31,7 +38,7 @@ export default function App() {
       const isDebug =
         window.location.search.includes('debug=layers') ||
         window.location.hash.includes('debug=layers');
-      if (isDebug) {
+      if (isDebug && isDebugAllowed) {
         setShowDebugLayers(true);
       }
     };
@@ -42,7 +49,7 @@ export default function App() {
       window.removeEventListener('popstate', checkDebugParam);
       window.removeEventListener('hashchange', checkDebugParam);
     };
-  }, []);
+  }, [isDebugAllowed]);
 
   // Синхронизация URL хэш-ссылок (#event=ID, #year=YYYY)
   useHashSync();
@@ -91,13 +98,15 @@ export default function App() {
             >
               Границы: {showModernBorders ? 'Вкл' : 'Выкл'}
             </button>
-            <button
-              onClick={() => setShowDebugLayers(true)}
-              className="cursor-pointer px-2 py-0.5 rounded-full text-[10px] font-mono text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors"
-              title="Открыть режим отладки слоёв GeoJSON (?debug=layers)"
-            >
-              Слои
-            </button>
+            {isDebugAllowed && (
+              <button
+                onClick={() => setShowDebugLayers(true)}
+                className="cursor-pointer px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors shadow-xs"
+                title="Открыть режим отладки слоёв GeoJSON (?debug=layers)"
+              >
+                ⚙️ Слои (?debug=layers)
+              </button>
+            )}
           </div>
         </div>
 
