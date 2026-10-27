@@ -291,6 +291,7 @@ npm run preview
 
 - MapLibre GL JS — BSD-3
 - Natural Earth — public domain
+- Historical Basemaps — [aourednik/historical-basemaps](https://github.com/aourednik/historical-basemaps) (GNU GPLv3, A. Ourednik и контрибьюторы) — исторические границы и контекст соседей
 - OpenStreetMap / OpenFreeMap — атрибуция обязательна (если используешь)
 - Изображения (портреты, фото памятников) — только с Wikimedia Commons с проверкой лицензии, указывать автора
 

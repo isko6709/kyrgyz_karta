@@ -39,6 +39,6 @@ export interface Ruler {
   commonsQuery: string;
   certainty: Certainty;
   legendary?: boolean;
-  figureType?: 'culture';
+  figureType?: 'culture' | 'ruler' | string;
   note: string;
 }

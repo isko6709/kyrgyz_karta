@@ -117,13 +117,13 @@ export function RulerColumn() {
             aria-label="Список исторических деятелей и правителей"
           >
             <div className="flex items-center justify-between text-xs text-[#5E5951] pb-1 border-b border-black/5">
-              <span>Правители ({activeRulers.length})</span>
+              <span>Правители и деятели ({activeRulers.length})</span>
               <span>{year < 0 ? `${Math.abs(year)} г. до н.э.` : `${year} г.`}</span>
             </div>
 
             {activeRulers.length === 0 ? (
               <div className="text-center py-12 px-2 text-xs text-[#5E5951]">
-                <p className="font-serif text-sm text-[#2B2A28]">Нет зафиксированных правителей</p>
+                <p className="font-serif text-sm text-[#2B2A28]">Нет зафиксированных деятелей</p>
                 <p className="mt-1 leading-relaxed">
                   для {year < 0 ? `${Math.abs(year)} г. до н.э.` : `${year} года`}.
                 </p>
@@ -134,6 +134,7 @@ export function RulerColumn() {
                   {activeRulers.map((ruler) => {
                     const isLayerActive =
                       ruler.layer !== null && ruler.layer === highlightedLayerId;
+                    const isCulture = ruler.figureType === 'culture';
 
                     return (
                       <motion.button
@@ -145,7 +146,7 @@ export function RulerColumn() {
                         transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
                         onClick={() => handleRulerClick(ruler)}
                         aria-pressed={isLayerActive}
-                        aria-label={`Правитель ${ruler.name}, ${ruler.display}. ${ruler.layer ? 'Нажмите для подсветки территории.' : ''}`}
+                        aria-label={`${isCulture ? 'Деятель культуры' : 'Правитель'} ${ruler.name}, ${ruler.display}. ${ruler.layer ? 'Нажмите для подсветки территории.' : ''}`}
                         className={`cursor-pointer w-full p-2 rounded-xl transition-all flex flex-col items-center border text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
                           isLayerActive
                             ? 'bg-white border-[#2C6466] ring-2 ring-[#2C6466]/30 shadow-md scale-102'
@@ -159,6 +160,13 @@ export function RulerColumn() {
                       >
                         {/* Аватарка через штатный компонент (внутри getPortrait) */}
                         <RulerAvatar ruler={ruler} size={60} />
+
+                        {/* Бейдж для деятелей культуры */}
+                        {isCulture && (
+                          <span className="mt-1 px-1.5 py-0.5 rounded text-[9.5px] font-medium bg-amber-100 text-amber-900 border border-amber-300/60 shadow-xs">
+                            Культура
+                          </span>
+                        )}
 
                         {/* Годы правления / активности под аватаром */}
                         <span className="mt-1 text-[11px] font-semibold text-[#2B2A28]">
@@ -216,6 +224,7 @@ export function RulerColumn() {
                 {activeRulers.map((ruler) => {
                   const isLayerActive =
                     ruler.layer !== null && ruler.layer === highlightedLayerId;
+                  const isCulture = ruler.figureType === 'culture';
 
                   return (
                     <motion.button
@@ -227,7 +236,7 @@ export function RulerColumn() {
                       transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
                       onClick={() => handleRulerClick(ruler)}
                       aria-pressed={isLayerActive}
-                      aria-label={`Правитель ${ruler.name}. ${ruler.layer ? 'Подсветить территорию' : ''}`}
+                      aria-label={`${isCulture ? 'Деятель культуры' : 'Правитель'} ${ruler.name}. ${ruler.layer ? 'Подсветить территорию' : ''}`}
                       className={`cursor-pointer shrink-0 flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-white/95 backdrop-blur-md shadow-sm border transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
                         isLayerActive
                           ? 'border-[#2C6466] ring-2 ring-[#2C6466]/30'
@@ -236,8 +245,15 @@ export function RulerColumn() {
                     >
                       <RulerAvatar ruler={ruler} size={36} compact={true} />
                       <div className="text-left">
-                        <div className="text-[11px] font-semibold text-[#2B2A28] leading-tight truncate max-w-[130px]">
-                          {ruler.name}
+                        <div className="flex items-center gap-1">
+                          <span className="text-[11px] font-semibold text-[#2B2A28] leading-tight truncate max-w-[110px]">
+                            {ruler.name}
+                          </span>
+                          {isCulture && (
+                            <span className="shrink-0 px-1 py-0.2 rounded text-[8.5px] font-medium bg-amber-100 text-amber-900">
+                              Культура
+                            </span>
+                          )}
                         </div>
                         <div className="text-[9.5px] text-[#5E5951]">
                           {ruler.from !== null && ruler.to !== null

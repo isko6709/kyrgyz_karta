@@ -14,6 +14,7 @@ export interface AppState {
   activeEraId: string;
   search: string;
   showModernBorders: boolean;
+  showNeighbors: boolean;
   highlightedLayerId: string | null;
   targetFlyTo: FlyToOptions | null;
 
@@ -25,6 +26,8 @@ export interface AppState {
   setActiveEraId: (eraId: string) => void;
   toggleModernBorders: () => void;
   setShowModernBorders: (show: boolean) => void;
+  toggleNeighbors: () => void;
+  setShowNeighbors: (show: boolean) => void;
   setHighlightedLayerId: (id: string | null) => void;
   flyTo: (center: [number, number], zoom?: number, duration?: number) => void;
 }
@@ -39,6 +42,7 @@ export const useStore = create<AppState>((set) => ({
   activeEraId: initialEra ? initialEra.id : 'turkic',
   search: '',
   showModernBorders: false,
+  showNeighbors: true,
   highlightedLayerId: null,
   targetFlyTo: null,
 
@@ -94,6 +98,10 @@ export const useStore = create<AppState>((set) => ({
     set((state) => ({ showModernBorders: !state.showModernBorders })),
   setShowModernBorders: (showModernBorders: boolean) =>
     set({ showModernBorders }),
+  toggleNeighbors: () =>
+    set((state) => ({ showNeighbors: !state.showNeighbors })),
+  setShowNeighbors: (showNeighbors: boolean) =>
+    set({ showNeighbors }),
   setHighlightedLayerId: (highlightedLayerId: string | null) =>
     set({ highlightedLayerId }),
   flyTo: (center: [number, number], zoom = 7, duration = 1400) =>

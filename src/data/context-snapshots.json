@@ -1,0 +1,227 @@
+[
+  {
+    "year": -700,
+    "file": "/data/context/world_-700.geojson",
+    "sizeKb": 239
+  },
+  {
+    "year": -500,
+    "file": "/data/context/world_-500.geojson",
+    "sizeKb": 247
+  },
+  {
+    "year": -400,
+    "file": "/data/context/world_-400.geojson",
+    "sizeKb": 246
+  },
+  {
+    "year": -323,
+    "file": "/data/context/world_-323.geojson",
+    "sizeKb": 240
+  },
+  {
+    "year": -300,
+    "file": "/data/context/world_-300.geojson",
+    "sizeKb": 246
+  },
+  {
+    "year": -200,
+    "file": "/data/context/world_-200.geojson",
+    "sizeKb": 251
+  },
+  {
+    "year": -100,
+    "file": "/data/context/world_-100.geojson",
+    "sizeKb": 266
+  },
+  {
+    "year": -1,
+    "file": "/data/context/world_-1.geojson",
+    "sizeKb": 354
+  },
+  {
+    "year": 100,
+    "file": "/data/context/world_100.geojson",
+    "sizeKb": 350
+  },
+  {
+    "year": 200,
+    "file": "/data/context/world_200.geojson",
+    "sizeKb": 340
+  },
+  {
+    "year": 300,
+    "file": "/data/context/world_300.geojson",
+    "sizeKb": 353
+  },
+  {
+    "year": 400,
+    "file": "/data/context/world_400.geojson",
+    "sizeKb": 329
+  },
+  {
+    "year": 500,
+    "file": "/data/context/world_500.geojson",
+    "sizeKb": 272
+  },
+  {
+    "year": 600,
+    "file": "/data/context/world_600.geojson",
+    "sizeKb": 273
+  },
+  {
+    "year": 700,
+    "file": "/data/context/world_700.geojson",
+    "sizeKb": 268
+  },
+  {
+    "year": 800,
+    "file": "/data/context/world_800.geojson",
+    "sizeKb": 264
+  },
+  {
+    "year": 900,
+    "file": "/data/context/world_900.geojson",
+    "sizeKb": 277
+  },
+  {
+    "year": 1000,
+    "file": "/data/context/world_1000.geojson",
+    "sizeKb": 311
+  },
+  {
+    "year": 1100,
+    "file": "/data/context/world_1100.geojson",
+    "sizeKb": 296
+  },
+  {
+    "year": 1200,
+    "file": "/data/context/world_1200.geojson",
+    "sizeKb": 299
+  },
+  {
+    "year": 1279,
+    "file": "/data/context/world_1279.geojson",
+    "sizeKb": 292
+  },
+  {
+    "year": 1300,
+    "file": "/data/context/world_1300.geojson",
+    "sizeKb": 290
+  },
+  {
+    "year": 1400,
+    "file": "/data/context/world_1400.geojson",
+    "sizeKb": 290
+  },
+  {
+    "year": 1492,
+    "file": "/data/context/world_1492.geojson",
+    "sizeKb": 1042
+  },
+  {
+    "year": 1500,
+    "file": "/data/context/world_1500.geojson",
+    "sizeKb": 332
+  },
+  {
+    "year": 1530,
+    "file": "/data/context/world_1530.geojson",
+    "sizeKb": 401
+  },
+  {
+    "year": 1600,
+    "file": "/data/context/world_1600.geojson",
+    "sizeKb": 539
+  },
+  {
+    "year": 1650,
+    "file": "/data/context/world_1650.geojson",
+    "sizeKb": 525
+  },
+  {
+    "year": 1700,
+    "file": "/data/context/world_1700.geojson",
+    "sizeKb": 521
+  },
+  {
+    "year": 1715,
+    "file": "/data/context/world_1715.geojson",
+    "sizeKb": 536
+  },
+  {
+    "year": 1783,
+    "file": "/data/context/world_1783.geojson",
+    "sizeKb": 504
+  },
+  {
+    "year": 1800,
+    "file": "/data/context/world_1800.geojson",
+    "sizeKb": 496
+  },
+  {
+    "year": 1815,
+    "file": "/data/context/world_1815.geojson",
+    "sizeKb": 426
+  },
+  {
+    "year": 1878,
+    "file": "/data/context/world_1878.geojson",
+    "sizeKb": 355
+  },
+  {
+    "year": 1880,
+    "file": "/data/context/world_1880.geojson",
+    "sizeKb": 353
+  },
+  {
+    "year": 1900,
+    "file": "/data/context/world_1900.geojson",
+    "sizeKb": 350
+  },
+  {
+    "year": 1914,
+    "file": "/data/context/world_1914.geojson",
+    "sizeKb": 337
+  },
+  {
+    "year": 1920,
+    "file": "/data/context/world_1920.geojson",
+    "sizeKb": 366
+  },
+  {
+    "year": 1930,
+    "file": "/data/context/world_1930.geojson",
+    "sizeKb": 351
+  },
+  {
+    "year": 1938,
+    "file": "/data/context/world_1938.geojson",
+    "sizeKb": 377
+  },
+  {
+    "year": 1945,
+    "file": "/data/context/world_1945.geojson",
+    "sizeKb": 366
+  },
+  {
+    "year": 1960,
+    "file": "/data/context/world_1960.geojson",
+    "sizeKb": 352
+  },
+  {
+    "year": 1994,
+    "file": "/data/context/world_1994.geojson",
+    "sizeKb": 396
+  },
+  {
+    "year": 2000,
+    "file": "/data/context/world_2000.geojson",
+    "sizeKb": 396
+  },
+  {
+    "year": 2010,
+    "file": "/data/context/world_2010.geojson",
+    "sizeKb": 396
+  }
+]

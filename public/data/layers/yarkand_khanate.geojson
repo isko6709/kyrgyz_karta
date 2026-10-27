@@ -1,0 +1,42 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "yarkand_khanate",
+        "title": "Яркендское ханство",
+        "from": 1514,
+        "to": 1705,
+        "schematic": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              73,
+              36
+            ],
+            [
+              92,
+              36
+            ],
+            [
+              92,
+              42
+            ],
+            [
+              73,
+              42
+            ],
+            [
+              73,
+              36
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

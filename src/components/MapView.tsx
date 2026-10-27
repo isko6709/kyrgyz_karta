@@ -8,6 +8,8 @@ import { useStore } from '../store';
 import { events, eventsForYear } from '../lib/data';
 import { CATEGORY_CONFIG } from './EventCard';
 import { TerritoryLayers } from './TerritoryLayers';
+import { NeighborsLayer } from './NeighborsLayer';
+import { eraForYear } from '../lib/data';
 
 // Настройка Web Worker для MapLibre GL JS v5+ в среде Vite/SPA
 maplibregl.setWorkerUrl(maplibreWorkerUrl);
@@ -35,7 +37,17 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
   const prevSelectedIdRef = useRef<number | null>(null);
   const shouldReduceMotion = useReducedMotion();
 
-  const { year, selectedEventId, selectEvent, showModernBorders, targetFlyTo } = useStore();
+  const {
+    year,
+    selectedEventId,
+    selectEvent,
+    showModernBorders,
+    toggleModernBorders,
+    showNeighbors,
+    toggleNeighbors,
+    targetFlyTo,
+  } = useStore();
+  const activeEra = useMemo(() => eraForYear(year), [year]);
 
   // Синхронизация видимости современных границ
   const applyBorderVisibility = useCallback(
@@ -160,6 +172,9 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
           }}
         />
 
+        {/* Фоновый контекст соседних государств (historical-basemaps) */}
+        <NeighborsLayer />
+
         {/* Слои исторических территорий текущего года */}
         <TerritoryLayers />
 
@@ -242,6 +257,73 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
           );
         })}
       </Map>
+
+      {/* Панель переключателей карты и легенда (historical-basemaps) */}
+      <div className="absolute top-16 left-4 md:left-[21.5rem] z-10 flex flex-col gap-1.5 pointer-events-auto">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {/* Переключатель «Соседи» */}
+          <button
+            onClick={toggleNeighbors}
+            aria-pressed={showNeighbors}
+            aria-label="Переключить отображение соседних государств"
+            className={`cursor-pointer px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm border transition-all flex items-center gap-1.5 backdrop-blur-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
+              showNeighbors
+                ? 'bg-[#2B2A28] text-white border-black'
+                : 'bg-white/95 text-[#5E5951] border-black/10 hover:bg-white hover:text-[#2B2A28]'
+            }`}
+          >
+            <span>🗺️ Соседи</span>
+            <span
+              className={`text-[9.5px] px-1 rounded font-mono ${
+                showNeighbors ? 'bg-white/20 text-white' : 'bg-black/5 text-[#5E5951]'
+              }`}
+            >
+              {showNeighbors ? 'Вкл' : 'Выкл'}
+            </span>
+          </button>
+
+          {/* Переключатель современных границ */}
+          <button
+            onClick={toggleModernBorders}
+            aria-pressed={showModernBorders}
+            aria-label="Переключить современные государственные границы"
+            className={`cursor-pointer px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm border transition-all flex items-center gap-1.5 backdrop-blur-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
+              showModernBorders
+                ? 'bg-[#2B2A28] text-white border-black'
+                : 'bg-white/95 text-[#5E5951] border-black/10 hover:bg-white hover:text-[#2B2A28]'
+            }`}
+          >
+            <span>🌐 Границы</span>
+            <span
+              className={`text-[9.5px] px-1 rounded font-mono ${
+                showModernBorders ? 'bg-white/20 text-white' : 'bg-black/5 text-[#5E5951]'
+              }`}
+            >
+              {showModernBorders ? 'Вкл' : 'Выкл'}
+            </span>
+          </button>
+        </div>
+
+        {/* Компактная легенда и атрибуция */}
+        <div className="px-2.5 py-1.5 rounded-xl bg-white/90 backdrop-blur-md shadow-sm border border-black/10 text-[10.5px] text-[#5E5951] max-w-xs space-y-1">
+          <div className="flex items-center gap-2">
+            <span
+              className="w-3 h-3 rounded shrink-0 border border-black/20"
+              style={{ backgroundColor: activeEra?.color ?? '#4F8A8B', opacity: 0.8 }}
+            />
+            <span className="font-medium text-[#2B2A28]">Фокус: кыргызские земли</span>
+          </div>
+          {showNeighbors && (
+            <div className="flex items-center gap-2">
+              <span className="w-3 h-3 rounded shrink-0 border border-black/20 bg-[#D4E2D4]" />
+              <span>Соседние государства (пастель)</span>
+            </div>
+          )}
+          <div className="text-[9px] leading-tight text-[#6B665E] pt-0.5 border-t border-black/5">
+            Границы схематичны, источник: <a href="https://github.com/aourednik/historical-basemaps" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#2B2A28]">historical-basemaps</a> (A. Ourednik и др., GPLv3).
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -189,9 +189,16 @@ export function SearchBox() {
                         className="cursor-pointer w-full text-left p-2 rounded-xl hover:bg-[#F6F1E7] transition-colors flex items-center justify-between gap-2 border border-transparent hover:border-black/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28]"
                       >
                         <div className="flex flex-col min-w-0">
-                          <span className="text-xs font-semibold text-[#2B2A28] truncate">
-                            {ruler.name}
-                          </span>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="text-xs font-semibold text-[#2B2A28] truncate">
+                              {ruler.name}
+                            </span>
+                            {ruler.figureType === 'culture' && (
+                              <span className="shrink-0 px-1 py-0.2 rounded text-[8.5px] font-medium bg-amber-100 text-amber-900 border border-amber-200">
+                                Культура
+                              </span>
+                            )}
+                          </div>
                           <span className="text-[10.5px] text-[#5E5951] truncate">
                             {ruler.role}
                           </span>

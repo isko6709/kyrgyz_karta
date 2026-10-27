@@ -1,0 +1,293 @@
+{
+  "note": "Для каждого слоя: years — желаемые снимки датасета historical-basemaps (агент выбирает ближайший реально существующий по индексу репозитория); nameMatch — регистронезависимые подстроки для поля NAME/SUBJECTO. Если не найдено — оставить схематичный полигон и записать в docs/layers-report.md. Современные слои (kirghiz_ao, kirghiz_ssr, kyrgyzstan) — брать KGZ.",
+  "dataset": "https://github.com/aourednik/historical-basemaps",
+  "layers": {
+    "saka_wusun": {
+      "years": [
+        -200,
+        -100,
+        1
+      ],
+      "nameMatch": [
+        "wusun",
+        "usun",
+        "saka",
+        "scythian"
+      ],
+      "modern": false
+    },
+    "yenisei_early": {
+      "years": [
+        -200,
+        100,
+        500
+      ],
+      "nameMatch": [
+        "yenisei",
+        "kyrgyz",
+        "kirghiz"
+      ],
+      "modern": false
+    },
+    "xiongnu": {
+      "years": [
+        -200,
+        -100
+      ],
+      "nameMatch": [
+        "xiongnu",
+        "hsiung",
+        "hun"
+      ],
+      "modern": false
+    },
+    "turkic_khaganates": {
+      "years": [
+        600,
+        700
+      ],
+      "nameMatch": [
+        "turk",
+        "gokturk",
+        "göktürk"
+      ],
+      "modern": false
+    },
+    "uyghur_khaganate": {
+      "years": [
+        800
+      ],
+      "nameMatch": [
+        "uyghur",
+        "uighur"
+      ],
+      "modern": false
+    },
+    "yenisei_khaganate": {
+      "years": [
+        900
+      ],
+      "nameMatch": [
+        "kyrgyz",
+        "kirghiz",
+        "yenisei"
+      ],
+      "modern": false
+    },
+    "samanid": {
+      "years": [
+        900,
+        1000
+      ],
+      "nameMatch": [
+        "samanid"
+      ],
+      "modern": false
+    },
+    "karakhanid": {
+      "years": [
+        1000,
+        1100
+      ],
+      "nameMatch": [
+        "karakhan",
+        "qarakhan",
+        "kara-khan",
+        "ilek"
+      ],
+      "modern": false
+    },
+    "kara_khitai": {
+      "years": [
+        1200
+      ],
+      "nameMatch": [
+        "khitai",
+        "khitay",
+        "kara-kit",
+        "liao"
+      ],
+      "modern": false
+    },
+    "khwarezmshah": {
+      "years": [
+        1200
+      ],
+      "nameMatch": [
+        "khwarez",
+        "khorez",
+        "chorasm"
+      ],
+      "modern": false
+    },
+    "chagatai_ulus": {
+      "years": [
+        1279,
+        1300
+      ],
+      "nameMatch": [
+        "chagatai",
+        "chaghatai"
+      ],
+      "modern": false
+    },
+    "moghulistan": {
+      "years": [
+        1400,
+        1492
+      ],
+      "nameMatch": [
+        "moghul",
+        "mughal",
+        "chagatai"
+      ],
+      "modern": false
+    },
+    "timurid": {
+      "years": [
+        1400,
+        1492
+      ],
+      "nameMatch": [
+        "timur"
+      ],
+      "modern": false
+    },
+    "kazakh_khanate": {
+      "years": [
+        1530,
+        1650,
+        1700,
+        1783
+      ],
+      "nameMatch": [
+        "kazakh",
+        "kazak"
+      ],
+      "modern": false
+    },
+    "yarkand_khanate": {
+      "years": [
+        1530,
+        1600,
+        1650
+      ],
+      "nameMatch": [
+        "yarkand",
+        "kashgar",
+        "moghul"
+      ],
+      "modern": false
+    },
+    "kyrgyz_tianshan": {
+      "years": [
+        1500,
+        1600,
+        1650
+      ],
+      "nameMatch": [
+        "kyrgyz",
+        "kirghiz"
+      ],
+      "modern": false
+    },
+    "dzungar": {
+      "years": [
+        1650,
+        1700,
+        1715
+      ],
+      "nameMatch": [
+        "dzungar",
+        "zungar",
+        "junghar",
+        "oirat"
+      ],
+      "modern": false
+    },
+    "qing_xinjiang": {
+      "years": [
+        1783,
+        1800,
+        1880
+      ],
+      "nameMatch": [
+        "qing",
+        "xinjiang",
+        "china"
+      ],
+      "modern": false
+    },
+    "kokand": {
+      "years": [
+        1800,
+        1815,
+        1880
+      ],
+      "nameMatch": [
+        "kokand",
+        "khokand"
+      ],
+      "modern": false
+    },
+    "russian_turkestan": {
+      "years": [
+        1880,
+        1900,
+        1914
+      ],
+      "nameMatch": [
+        "russia",
+        "turkestan"
+      ],
+      "modern": false
+    },
+    "turkestan_assr": {
+      "years": [
+        1920
+      ],
+      "nameMatch": [
+        "turkestan",
+        "kyrgyz",
+        "kirghiz",
+        "soviet",
+        "russia"
+      ],
+      "modern": false
+    },
+    "kirghiz_ao": {
+      "years": [
+        1920,
+        1930
+      ],
+      "nameMatch": [
+        "kyrgyz",
+        "kirghiz"
+      ],
+      "modern": true
+    },
+    "kirghiz_ssr": {
+      "years": [
+        1945,
+        1960
+      ],
+      "nameMatch": [
+        "kyrgyz",
+        "kirghiz"
+      ],
+      "modern": true
+    },
+    "kyrgyzstan": {
+      "years": [
+        1994,
+        2000,
+        2010
+      ],
+      "nameMatch": [
+        "kyrgyz",
+        "kirghiz"
+      ],
+      "modern": true
+    }
+  }
+}

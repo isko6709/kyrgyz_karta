@@ -107,38 +107,34 @@ export function TerritoryLayers() {
     };
   }, [activeLayers, eraColor, highlightedLayerId]);
 
-  // Список слоёв для показа подписи «схематично» (только приблизительные контуры или bbox-заглушки)
-  const schematicMarkers = useMemo(() => {
-    return activeLayers
-      .filter((l) => {
-        // Современные слои на основе официальных границ не схематичны
-        if (l.id === 'kirghiz_ao' || l.id === 'kirghiz_ssr' || l.id === 'kyrgyzstan') {
-          return false;
-        }
+  // Список подписей активных территорий текущего года (заглавными буквами)
+  const territoryLabels = useMemo(() => {
+    return activeLayers.map((l) => {
+      const [west, south, east, north] = l.bbox;
+      let isSchematic = false;
+      if (l.id !== 'kirghiz_ao' && l.id !== 'kirghiz_ssr' && l.id !== 'kyrgyzstan') {
         const cachedEntry = getCachedLayer(l.id);
         if (cachedEntry.status !== 'loaded') {
-          return true; // Fallback bbox всегда схематичный
+          isSchematic = true;
+        } else if (cachedEntry.data) {
+          const d = cachedEntry.data;
+          if (d.type === 'FeatureCollection' && d.features.length > 0) {
+            isSchematic = d.features[0].properties?.schematic !== false;
+          } else if (d.type === 'Feature') {
+            isSchematic = d.properties?.schematic !== false;
+          }
         }
-        const data = cachedEntry.data;
-        if (!data) return true;
-        if (data.type === 'FeatureCollection' && data.features.length > 0) {
-          return data.features[0].properties?.schematic !== false;
-        }
-        if (data.type === 'Feature') {
-          return data.properties?.schematic !== false;
-        }
-        return true;
-      })
-      .map((l) => {
-        const [west, south, east, north] = l.bbox;
-        return {
-          id: l.id,
-          title: l.title,
-          lng: (west + east) / 2,
-          lat: (south + north) / 2,
-          isHighlighted: l.id === highlightedLayerId,
-        };
-      });
+      }
+
+      return {
+        id: l.id,
+        title: l.title.toUpperCase(),
+        isSchematic,
+        lng: (west + east) / 2,
+        lat: (south + north) / 2,
+        isHighlighted: l.id === highlightedLayerId,
+      };
+    });
   }, [activeLayers, highlightedLayerId]);
 
   return (
@@ -152,10 +148,10 @@ export function TerritoryLayers() {
             'fill-opacity': [
               'case',
               ['==', ['get', 'isHighlighted'], true],
-              0.38,
-              0.18,
+              0.65,
+              0.45,
             ],
-            'fill-opacity-transition': { duration: 600, delay: 0 },
+            'fill-opacity-transition': { duration: 500, delay: 0 },
           }}
         />
         <Layer
@@ -171,32 +167,37 @@ export function TerritoryLayers() {
             'line-width': [
               'case',
               ['==', ['get', 'isHighlighted'], true],
-              3.0,
-              1.5,
+              3.5,
+              2.2,
             ],
             'line-opacity': [
               'case',
               ['==', ['get', 'isHighlighted'], true],
               1.0,
-              0.7,
+              0.85,
             ],
-            'line-opacity-transition': { duration: 600, delay: 0 },
+            'line-opacity-transition': { duration: 500, delay: 0 },
           }}
         />
       </Source>
 
-      {/* Подписи «схематично» по центру для приблизительных слоёв */}
-      {schematicMarkers.map((m) => (
-        <Marker key={`marker-schematic-${m.id}`} longitude={m.lng} latitude={m.lat} anchor="center">
+      {/* Подписи фоновых государств заглавными буквами */}
+      {territoryLabels.map((m) => (
+        <Marker key={`marker-territory-${m.id}`} longitude={m.lng} latitude={m.lat} anchor="center">
           <div className="pointer-events-none select-none text-center">
             <span
-              className="px-2 py-0.5 rounded text-[11px] font-medium tracking-wide shadow-sm border border-black/10 backdrop-blur-sm"
-              style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.85)',
-                color: '#2B2A28',
-              }}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold tracking-wider uppercase shadow-md border backdrop-blur-md transition-all ${
+                m.isHighlighted
+                  ? 'bg-[#2B2A28] text-white border-white/20 ring-2 ring-[#2B2A28]/40'
+                  : 'bg-white/90 text-[#2B2A28] border-black/15'
+              }`}
             >
-              {m.title} <span className="text-[10px] text-[#5E5951] italic">(схематично)</span>
+              {m.title}
+              {m.isSchematic && (
+                <span className="ml-1 text-[9.5px] text-[#5E5951] font-normal lowercase italic tracking-normal">
+                  (схематично)
+                </span>
+              )}
             </span>
           </div>
         </Marker>

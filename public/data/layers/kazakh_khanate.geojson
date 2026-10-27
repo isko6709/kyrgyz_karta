@@ -1,0 +1,42 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "kazakh_khanate",
+        "title": "Казахское ханство",
+        "from": 1465,
+        "to": 1847,
+        "schematic": true
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              50,
+              40
+            ],
+            [
+              85,
+              40
+            ],
+            [
+              85,
+              55
+            ],
+            [
+              50,
+              55
+            ],
+            [
+              50,
+              40
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
