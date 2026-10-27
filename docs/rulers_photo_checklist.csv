@@ -1,0 +1,67 @@
+﻿id,name_ru,commons_search,years,era,image_type,in_rulers_json,note,source_url,author,license,file,status
+modu,"Модэ (Маодунь), шаньюй хунну",Modu Chanyu / Mete Khan,правл. 209–174 до н.э.,ancient,none,no,Упомянут в связи с первым упоминанием кыргызов; подлинных портретов нет,,,,public/portraits/modu.webp,no-portrait
+bumin-khagan,Бумын-каган,Bumin Qaghan,ум. 552,turkic,none,no,Основатель Тюркского каганата,,,,public/portraits/bumin-khagan.webp,no-portrait
+istemi-khagan,Истеми-каган,Istämi Qaghan,ум. ок. 576,turkic,none,no,Западная часть Тюркского каганата,,,,public/portraits/istemi-khagan.webp,no-portrait
+tong-yabghu,Тон-ябгу-каган,Tong Yabghu Qaghan,правл. 618–630,turkic,none,no,Ставка в районе Суяба (Чуйская долина),,,,public/portraits/tong-yabghu.webp,no-portrait
+suluk,Сулу-каган (тюргеши),Suluk Turgesh,ум. 738,turkic,none,no,"Тюргешский каганат, Семиречье",,,,public/portraits/suluk.webp,no-portrait
+barsbek,Барсбек (Барс-бек),Bars Bek Kyrgyz khagan,правл. 693–711,turkic,none,yes,Даты — реконструкция,,,,public/portraits/barsbek.webp,no-portrait
+bilge-tong-erkin,Билге Тон Эркин,Bilge Tong Erkin Kyrgyz,правл. 758–795,turkic,none,no,Даты — по реконструкциям,,,,public/portraits/bilge-tong-erkin.webp,no-portrait
+aju,Ажо (Ачжо) каган,Aju Kyrgyz khagan,ум. 847,turkic,none,yes,Разгром Уйгурского каганата 840,,,,public/portraits/aju.webp,no-portrait
+inju-khagan,Ынчу (Инджу) каган,Inju Kyrgyz Khagan,правл. 847–866,turkic,none,no,Даты — по реконструкциям,,,,public/portraits/inju-khagan.webp,no-portrait
+manas,Манас,Manas epic hero,эпический герой,turkic,none,yes,Историчность не доказана; только памятники/графика с проверенной лицензией,,,,public/portraits/manas.webp,no-portrait
+satuk-bugra-khan,Сатук Богра-хан,Satuq Bughra Khan,ум. ок. 955,karakhanid,none,yes,,,,,public/portraits/satuk-bugra-khan.webp,no-portrait
+tabgach-bugra-khan,Табгач Богра-хан (Хасан б. Сулейман),Tabghach Bughra Khan,XI в.,karakhanid,none,no,Адресат «Кутадгу билиг» (уточнить),,,,public/portraits/tabgach-bugra-khan.webp,no-portrait
+yelu-dashi,Елюй Даши,Yelü Dashi,1087–1143,karakhanid,art,yes,Посмертные китайские изображения,,,,public/portraits/yelu-dashi.webp,todo
+kuchlug,Кучлук,Kuchlug Naiman,ум. 1218,karakhanid,none,yes,,,,,public/portraits/kuchlug.webp,no-portrait
+genghis-khan,Чингисхан,Genghis Khan portrait,ок. 1162–1227,mongol,art,yes,Портрет эпохи Юань,,,,public/portraits/genghis-khan.webp,todo
+jochi,Джучи,Jochi son of Genghis Khan,ок. 1182–1227,mongol,art,yes,Миниатюры Рашид ад-Дина — условные,,,,public/portraits/jochi.webp,todo
+chagatai,Чагатай-хан,Chagatai Khan,1183–1242,mongol,art,yes,Миниатюры — условные,,,,public/portraits/chagatai.webp,todo
+tughlugh-timur,Туглук-Тимур,Tughlugh Timur,ок. 1329–1363,mongol,none,yes,,,,,public/portraits/tughlugh-timur.webp,no-portrait
+khizr-khoja,Хызр-ходжа,Khizr Khoja Moghulistan,ум. 1399,mongol,none,no,Хан Моголистана,,,,public/portraits/khizr-khoja.webp,no-portrait
+timur,Тимур (Тамерлан),Timur Tamerlane portrait,1336–1405,mongol,art,yes,Миниатюры + реконструкция Герасимова (проверить лицензию),,,,public/portraits/timur.webp,todo
+ulugh-beg,Улугбек,Ulugh Beg,1394–1449,mongol,art,no,Тимурид; миниатюры/памятники,,,,public/portraits/ulugh-beg.webp,todo
+esen-buqa-ii,Эсен-Буга II,Esen Buqa II Moghulistan,правл. 1429–1462,mongol,none,no,Хан Моголистана,,,,public/portraits/esen-buqa-ii.webp,no-portrait
+yunus-khan,Юнус-хан,Yunus Khan Moghulistan,1416–1487,mongol,art,no,Хан Моголистана,,,,public/portraits/yunus-khan.webp,todo
+babur,Бабур,Babur Fergana portrait,1483–1530,mongol,art,no,Правитель Ферганы; «трон Бабура» на Сулайман-Тоо в Оше,,,,public/portraits/babur.webp,todo
+said-khan,Сайид-хан,Said Khan Yarkand,1487–1533,tribes,none,yes,,,,,public/portraits/said-khan.webp,no-portrait
+abd-ar-rashid-khan,Абд ар-Рашид-хан,Abdurashid Khan Yarkand,1510–1559,tribes,none,no,Яркендское ханство,,,,public/portraits/abd-ar-rashid-khan.webp,no-portrait
+erdeni-batur,Эрдэни-Батур,Erdeni Batur Dzungar,ум. 1653,tribes,art,yes,,,,,public/portraits/erdeni-batur.webp,todo
+galdan-boshugtu,Галдан-Бошогту,Galdan Boshugtu Khan,1644–1697,tribes,art,yes,,,,,public/portraits/galdan-boshugtu.webp,todo
+tsewang-rabtan,Цэван-Рабдан,Tsewang Rabtan,1643–1727,tribes,art,no,Джунгарское ханство,,,,public/portraits/tsewang-rabtan.webp,todo
+galdan-tseren,Галдан-Цэрэн,Galdan Tseren,1695–1745,tribes,art,no,Джунгарское ханство,,,,public/portraits/galdan-tseren.webp,todo
+amursana,Амурсана,Amursana,1723–1757,tribes,art,no,Последняя борьба с Цин,,,,public/portraits/amursana.webp,todo
+qianlong,Цяньлун,Qianlong Emperor portrait,1711–1799,tribes,art,no,Император Цин; разгром Джунгарии,,,,public/portraits/qianlong.webp,todo
+shahrukh-biy,Шахрух-бий,Shahrukh Bi Kokand,ум. ок. 1721,tribes,none,yes,Даты уточнить,,,,public/portraits/shahrukh-biy.webp,no-portrait
+erdana-biy,Эрдана-бий,Erdana Bi Kokand,правл. 1751–1770,tribes,none,no,Даты уточнить,,,,public/portraits/erdana-biy.webp,no-portrait
+narbuta-biy,Нарбута-бий,Narbuta Bi Kokand,правл. 1770–1798,tribes,none,no,Даты уточнить,,,,public/portraits/narbuta-biy.webp,no-portrait
+alim-khan,Алим-хан,Alim Khan Kokand,ок. 1774–1809,tribes,none,yes,,,,,public/portraits/alim-khan.webp,no-portrait
+umar-khan,Умар-хан,Umar Khan Kokand,1787–1822,tribes,none,yes,,,,,public/portraits/umar-khan.webp,no-portrait
+madali-khan,Мадали-хан,Madali Khan Kokand,правл. 1822–1842,tribes,none,no,,,,,public/portraits/madali-khan.webp,no-portrait
+khudoyar-khan,Худояр-хан,Khudayar Khan Kokand,1829–1886,tribes,art,no,Правил с перерывами 1845–1875; фотографии/портреты XIX в.,,,,public/portraits/khudoyar-khan.webp,todo
+malla-khan,Малла-хан,Malla Khan Kokand,правл. 1858–1862,tribes,none,no,Даты уточнить,,,,public/portraits/malla-khan.webp,no-portrait
+ormon-khan,Ормон-хан,Ormon Khan Kyrgyz,1792–1854,tribes,none,no,Кыргызский правитель Чуйской долины/Иссык-Куля; даты и племя уточнить,,,,public/portraits/ormon-khan.webp,no-portrait
+baytik-baatyr,Байтик-баатыр,Baytik Baatyr,ок. 1829–1856,tribes,none,no,Годы жизни уточнить,,,,public/portraits/baytik-baatyr.webp,no-portrait
+alymbek-datka,Алымбек датка,Alymbek Datka,ок. 1799–1862,tribes,none,yes,,,,,public/portraits/alymbek-datka.webp,no-portrait
+kurmanjan-datka,Курманджан датка,Kurmanjan Datka,1811–1907,tribes,art,yes,Есть фото конца XIX в.; проверить лицензию,,,,public/portraits/kurmanjan-datka.webp,todo
+shabdan-baatyr,Шабдан-баатыр,Shabdan Baatyr Jantaev,1839–1912,russian,art,no,Историческое фото; проверить лицензию,,,,public/portraits/shabdan-baatyr.webp,todo
+pulat-khan,Пулат-хан (Пулат-бек),Pulat Khan Kokand uprising,ум. 1876,russian,none,yes,,,,,public/portraits/pulat-khan.webp,no-portrait
+alexander-ii,Александр II,Alexander II of Russia portrait,1818–1881,russian,art,no,,,,,public/portraits/alexander-ii.webp,todo
+nicholas-ii,Николай II,Nicholas II of Russia,1868–1918,russian,art,no,Указ 1916 г.,,,,public/portraits/nicholas-ii.webp,todo
+kaufman,Константин фон Кауфман,Konstantin Kaufman Turkestan,1818–1882,russian,art,yes,,,,,public/portraits/kaufman.webp,todo
+skobelev,Михаил Скобелев,Mikhail Skobelev,1843–1882,russian,art,no,Подавление Кокандского восстания 1876,,,,public/portraits/skobelev.webp,todo
+frunze,Михаил Фрунзе,Mikhail Frunze,1885–1925,soviet,art,yes,Уроженец Пишпека,,,,public/portraits/frunze.webp,todo
+sydykov,Абдыкерим Сыдыков,Abdykerim Sydykov,ок. 1889–1938,soviet,art,yes,Проверить годы,,,,public/portraits/sydykov.webp,todo
+abdrakhmanov,Юсуп Абдрахманов,Yusup Abdrakhmanov,1901–1938,soviet,art,yes,Проверить должности,,,,public/portraits/abdrakhmanov.webp,todo
+tynystanov,Касым Тыныстанов,Kasym Tynystanov,1901–1938,soviet,art,no,"Лингвист, создатель алфавита",,,,public/portraits/tynystanov.webp,todo
+razzakov,Исхак Раззаков,Iskhak Razzakov,1910–1979,soviet,art,yes,Проверить годы,,,,public/portraits/razzakov.webp,todo
+usubaliev,Турдакун Усубалиев,Turdakun Usubaliev,1919–2015,soviet,photo,yes,Проверить годы и лицензию,,,,public/portraits/usubaliev.webp,todo
+masaliev,Абсамат Масалиев,Absamat Masaliev,р. 1933,soviet,photo,no,Первый секретарь 1985–1990; проверить даты,,,,public/portraits/masaliev.webp,todo
+aitmatov,Чингиз Айтматов,Chingiz Aitmatov,1928–2008,soviet,photo,yes,,,,,public/portraits/aitmatov.webp,todo
+toktogul,Токтогул Сатылганов,Toktogul Satylganov,1864–1933,soviet,art,no,Акын,,,,public/portraits/toktogul.webp,todo
+togolok-moldo,Тоголок Молдо,Togolok Moldo,1860–1942,soviet,art,no,"Поэт, манасчи",,,,public/portraits/togolok-moldo.webp,todo
+akayev,Аскар Акаев,Askar Akayev,р. 1944; 1990–2005,modern,photo,yes,Лицензия!,,,,public/portraits/akayev.webp,todo
+bakiyev,Курманбек Бакиев,Kurmanbek Bakiyev,р. 1949; 2005–2010,modern,photo,yes,Лицензия!,,,,public/portraits/bakiyev.webp,todo
+otunbayeva,Роза Отунбаева,Roza Otunbayeva,р. 1950; 2010–2011,modern,photo,yes,Лицензия!,,,,public/portraits/otunbayeva.webp,todo
+atambayev,Алмазбек Атамбаев,Almazbek Atambayev,р. 1956; 2011–2017,modern,photo,yes,Лицензия!,,,,public/portraits/atambayev.webp,todo
+jeenbekov,Сооронбай Жээнбеков,Sooronbay Jeenbekov,р. 1958; 2017–2020,modern,photo,yes,Лицензия!,,,,public/portraits/jeenbekov.webp,todo
+japarov,Садыр Жапаров,Sadyr Japarov,р. 1968; с 2020,modern,photo,yes,Лицензия!,,,,public/portraits/japarov.webp,todo

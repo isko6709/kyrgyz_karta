@@ -1,0 +1,38 @@
+{
+  "name": "kyrgyz-history",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "preview": "vite preview",
+    "sync:portraits": "node scripts/sync-portraits.mjs",
+    "portraits:fetch": "node scripts/portraits.mjs fetch",
+    "portraits:pick": "node scripts/portraits.mjs pick",
+    "portraits:crop": "node scripts/portraits.mjs crop",
+    "predev": "npm run sync:portraits",
+    "prebuild": "npm run sync:portraits"
+  },
+  "dependencies": {
+    "framer-motion": "^14.7.0",
+    "maplibre-gl": "^6.16.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-map-gl": "^8.1.3",
+    "zustand": "^5.0.16"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^24.19.2",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^6.1.2",
+    "oxlint": "^1.89.0",
+    "sharp": "^0.35.5",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~7.0.2",
+    "vite": "^8.3.5"
+  }
+}

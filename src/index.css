@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Lora", Georgia, Cambria, serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --color-paper: #F6F1E7;
+  --color-land: #EFE8D8;
+  --color-water: #DCE8EE;
+  --color-ink: #2B2A28;
+  --color-ink-muted: #6B665E;
+
+  --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.08);
+  --radius-card: 16px;
+}
+
+:root {
+  --bg-paper: #F6F1E7;
+  --bg-land: #EFE8D8;
+  --bg-water: #DCE8EE;
+  --text-main: #2B2A28;
+  --text-muted: #6B665E;
+  --card-bg: #FFFFFF;
+  --card-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  --card-radius: 16px;
+  --era-accent: #4F8A8B;
+  color-scheme: light;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body {
+  background-color: var(--bg-paper);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar styling for panels */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(43, 42, 40, 0.15);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(43, 42, 40, 0.25);
+}
+
+/* Скрытие скроллбара для горизонтальных полос */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Доступность: глобальная поддержка prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Универсальные стили доступного фокуса */
+:focus-visible {
+  outline: 2px solid #2B2A28 !important;
+  outline-offset: 2px !important;
+}
+
+/* Адаптивное позиционирование элементов управления MapLibre на мобильных */
+@media (max-width: 768px) {
+  .maplibregl-ctrl-bottom-left {
+    bottom: auto !important;
+    left: auto !important;
+    top: 5.25rem !important;
+    right: 0.75rem !important;
+    margin: 0 !important;
+  }
+}
