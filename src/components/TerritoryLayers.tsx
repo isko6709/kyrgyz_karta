@@ -5,14 +5,76 @@ import { layersForYear, eraForYear } from '../lib/data';
 import { useStore } from '../store';
 import { loadLayerGeoJson, getCachedLayer } from '../lib/layersCache';
 
+/**
+ * Преобразует HEX-цвет в [H, S, L]
+ */
+function hexToHsl(hex: string): [number, number, number] {
+  let c = hex.replace('#', '');
+  if (c.length === 3) c = c.split('').map((x) => x + x).join('');
+  const num = parseInt(c, 16);
+  const r = (num >> 16) / 255;
+  const g = ((num >> 8) & 255) / 255;
+  const b = (num & 255) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0;
+  let s = 0;
+  const l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r:
+        h = (g - b) / d + (g < b ? 6 : 0);
+        break;
+      case g:
+        h = (b - r) / d + 2;
+        break;
+      case b:
+        h = (r - g) / d + 4;
+        break;
+    }
+    h *= 60;
+  }
+  return [Math.round(h), Math.round(s * 100), Math.round(l * 100)];
+}
+
+/**
+ * Генерирует гармоничный цвет для слоёв одной эпохи, чтобы два фокусных слоя
+ * не сливались и не скрывали друг друга
+ */
+function getLayerColor(baseEraColor: string, index: number, total: number): string {
+  if (total <= 1 || index === 0) return baseEraColor;
+  try {
+    const [h, s, l] = hexToHsl(baseEraColor);
+    // Мягкий гармоничный сдвиг по цветовому кругу
+    const newHue = (h + index * 32) % 360;
+    const newLight = Math.min(62, Math.max(38, l + (index % 2 === 1 ? 6 : -6)));
+    return `hsl(${newHue}, ${s}%, ${newLight}%)`;
+  } catch {
+    return baseEraColor;
+  }
+}
+
+/**
+ * Генерирует контрастный контур для каждого слоя
+ */
+function getLayerBorderColor(index: number, isHighlighted: boolean): string {
+  if (isHighlighted) return '#1A1918';
+  // Базовый тёмно-графитовый и тёмно-умбровый контуры для различения границ
+  return index === 0 ? '#2B2A28' : '#3E342B';
+}
+
 export function TerritoryLayers() {
   const year = useStore((s) => s.year);
   const highlightedLayerId = useStore((s) => s.highlightedLayerId);
+  const setHighlightedLayerId = useStore((s) => s.setHighlightedLayerId);
+
   const activeLayers = useMemo(() => layersForYear(year), [year]);
   const activeEra = useMemo(() => eraForYear(year), [year]);
   const eraColor = activeEra?.color ?? '#4F8A8B';
 
-  // Локальный счётчик обновлений кэша для ре-рендера
+  // Локальный счётчик обновлений кэша для ре-рендера при ленивой загрузке
   const [, setCacheRevision] = useState(0);
 
   // Загружаем GeoJSON для активных слоёв с кэшированием и обработкой ошибок
@@ -39,10 +101,14 @@ export function TerritoryLayers() {
   const geojson = useMemo<FeatureCollection>(() => {
     const features: Feature[] = [];
 
-    for (const l of activeLayers) {
+    for (let i = 0; i < activeLayers.length; i++) {
+      const l = activeLayers[i];
       const isHighlighted = l.id === highlightedLayerId;
       const cachedEntry = getCachedLayer(l.id);
       const cached = cachedEntry.status === 'loaded' ? cachedEntry.data : null;
+
+      const layerColor = getLayerColor(eraColor, i, activeLayers.length);
+      const borderColor = getLayerBorderColor(i, isHighlighted);
 
       if (cached) {
         if (cached.type === 'FeatureCollection') {
@@ -53,9 +119,11 @@ export function TerritoryLayers() {
                 ...f.properties,
                 id: l.id,
                 title: l.title,
-                color: eraColor,
+                color: layerColor,
+                borderColor,
                 isFallback: false,
                 isHighlighted,
+                layerIndex: i,
               },
             });
           }
@@ -66,9 +134,11 @@ export function TerritoryLayers() {
               ...cached.properties,
               id: l.id,
               title: l.title,
-              color: eraColor,
+              color: layerColor,
+              borderColor,
               isFallback: false,
               isHighlighted,
+              layerIndex: i,
             },
           });
         }
@@ -81,9 +151,11 @@ export function TerritoryLayers() {
           properties: {
             id: l.id,
             title: l.title,
-            color: eraColor,
+            color: layerColor,
+            borderColor,
             isFallback: true,
             isHighlighted,
+            layerIndex: i,
           },
           geometry: {
             type: 'Polygon',
@@ -108,8 +180,9 @@ export function TerritoryLayers() {
   }, [activeLayers, eraColor, highlightedLayerId]);
 
   // Список подписей активных территорий текущего года (заглавными буквами)
+  // с защитой от наложения меток друг на друга
   const territoryLabels = useMemo(() => {
-    return activeLayers.map((l) => {
+    const rawLabels = activeLayers.map((l, index) => {
       const [west, south, east, north] = l.bbox;
       let isSchematic = false;
       if (l.id !== 'kirghiz_ao' && l.id !== 'kirghiz_ssr' && l.id !== 'kyrgyzstan') {
@@ -130,16 +203,32 @@ export function TerritoryLayers() {
         id: l.id,
         title: l.title.toUpperCase(),
         isSchematic,
+        color: getLayerColor(eraColor, index, activeLayers.length),
         lng: (west + east) / 2,
         lat: (south + north) / 2,
         isHighlighted: l.id === highlightedLayerId,
       };
     });
-  }, [activeLayers, highlightedLayerId]);
+
+    // Разносим центры меток по вертикали/горизонтали, если они слишком близко
+    for (let i = 0; i < rawLabels.length; i++) {
+      for (let j = i + 1; j < rawLabels.length; j++) {
+        const dLng = Math.abs(rawLabels[i].lng - rawLabels[j].lng);
+        const dLat = Math.abs(rawLabels[i].lat - rawLabels[j].lat);
+        if (dLng < 4.5 && dLat < 2.5) {
+          rawLabels[i].lat += 0.8;
+          rawLabels[j].lat -= 0.8;
+        }
+      }
+    }
+
+    return rawLabels;
+  }, [activeLayers, eraColor, highlightedLayerId]);
 
   return (
     <>
       <Source id="territories-source" type="geojson" data={geojson}>
+        {/* Заливка фокусного государства: fill-opacity ~0.45, два слоя не скрывают друг друга */}
         <Layer
           id="territories-fill"
           type="fill"
@@ -154,52 +243,56 @@ export function TerritoryLayers() {
             'fill-opacity-transition': { duration: 500, delay: 0 },
           }}
         />
+
+        {/* Контур фокусного государства: заметно толще соседних (2.6..3.6 px vs 0.8 px) */}
         <Layer
           id="territories-line"
           type="line"
           paint={{
-            'line-color': [
-              'case',
-              ['==', ['get', 'isHighlighted'], true],
-              '#2B2A28',
-              ['get', 'color'],
-            ],
+            'line-color': ['get', 'borderColor'],
             'line-width': [
               'case',
               ['==', ['get', 'isHighlighted'], true],
-              3.5,
-              2.2,
+              3.6,
+              2.6,
             ],
-            'line-opacity': [
-              'case',
-              ['==', ['get', 'isHighlighted'], true],
-              1.0,
-              0.85,
-            ],
+            'line-opacity': 0.95,
             'line-opacity-transition': { duration: 500, delay: 0 },
           }}
         />
       </Source>
 
-      {/* Подписи фоновых государств заглавными буквами */}
+      {/* Подписи фокусных государств заглавными буквами с бейджами и возможностью выбора */}
       {territoryLabels.map((m) => (
         <Marker key={`marker-territory-${m.id}`} longitude={m.lng} latitude={m.lat} anchor="center">
-          <div className="pointer-events-none select-none text-center">
+          <button
+            type="button"
+            aria-label={`Территория: ${m.title}. Нажмите для подсветки границ`}
+            onClick={(e) => {
+              e.stopPropagation();
+              setHighlightedLayerId(m.isHighlighted ? null : m.id);
+            }}
+            className="cursor-pointer select-none text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] rounded-xl transition-transform hover:scale-105 active:scale-95"
+          >
             <span
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold tracking-wider uppercase shadow-md border backdrop-blur-md transition-all ${
+              className={`px-3 py-1.5 rounded-xl text-[11px] font-bold tracking-wider uppercase shadow-md border backdrop-blur-md transition-all flex items-center gap-1.5 ${
                 m.isHighlighted
-                  ? 'bg-[#2B2A28] text-white border-white/20 ring-2 ring-[#2B2A28]/40'
-                  : 'bg-white/90 text-[#2B2A28] border-black/15'
+                  ? 'bg-[#2B2A28] text-white border-white/20 ring-2 ring-[#2B2A28]/40 shadow-xl'
+                  : 'bg-white/95 text-[#2B2A28] border-black/15 hover:bg-white hover:border-black/30'
               }`}
             >
-              {m.title}
+              <span
+                className="w-2.5 h-2.5 rounded-full shrink-0 border border-black/20"
+                style={{ backgroundColor: m.color }}
+              />
+              <span>{m.title}</span>
               {m.isSchematic && (
-                <span className="ml-1 text-[9.5px] text-[#5E5951] font-normal lowercase italic tracking-normal">
+                <span className="text-[9.5px] text-[#6B665E] font-normal lowercase italic tracking-normal">
                   (схематично)
                 </span>
               )}
             </span>
-          </div>
+          </button>
         </Marker>
       ))}
     </>

@@ -1,15 +1,15 @@
-import { useEffect, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
 import Map, { NavigationControl, Marker, type MapRef } from 'react-map-gl/maplibre';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import { useReducedMotion } from 'framer-motion';
 import { useStore } from '../store';
-import { events, eventsForYear } from '../lib/data';
+import { events, eventsForYear, layersForYear, eraForYear } from '../lib/data';
+import { getClosestSnapshotYear } from '../lib/contextCache';
 import { CATEGORY_CONFIG } from './EventCard';
 import { TerritoryLayers } from './TerritoryLayers';
 import { NeighborsLayer } from './NeighborsLayer';
-import { eraForYear } from '../lib/data';
 
 // Настройка Web Worker для MapLibre GL JS v5+ в среде Vite/SPA
 maplibregl.setWorkerUrl(maplibreWorkerUrl);
@@ -45,9 +45,14 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
     toggleModernBorders,
     showNeighbors,
     toggleNeighbors,
+    highlightedLayerId,
+    setHighlightedLayerId,
     targetFlyTo,
   } = useStore();
   const activeEra = useMemo(() => eraForYear(year), [year]);
+  const activeLayers = useMemo(() => layersForYear(year), [year]);
+  const closestSnapshotYear = useMemo(() => getClosestSnapshotYear(year), [year]);
+  const [legendOpen, setLegendOpen] = useState(true);
 
   // Синхронизация видимости современных границ
   const applyBorderVisibility = useCallback(
@@ -146,9 +151,25 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
           (window as unknown as { __MAP_ERROR__: unknown }).__MAP_ERROR__ = e;
         }}
         onClick={(e) => {
-          // Клик по фону карты снимает выбор события
+          const map = mapRef.current?.getMap();
+          if (!map) return;
+
+          // 1. Проверяем клик по фокусным слоям территорий
+          if (map.getLayer('territories-fill')) {
+            const terr = map.queryRenderedFeatures(e.point, { layers: ['territories-fill'] });
+            if (terr.length > 0) {
+              const clickedId = terr[0].properties?.id as string | undefined;
+              if (clickedId) {
+                setHighlightedLayerId(clickedId === highlightedLayerId ? null : clickedId);
+                return;
+              }
+            }
+          }
+
+          // 2. Клик по фону карты снимает выбор события и подсветку слоя
           if ((e.originalEvent.target as HTMLElement).tagName === 'CANVAS') {
             if (selectedEventId !== null) selectEvent(null);
+            if (highlightedLayerId !== null) setHighlightedLayerId(null);
           }
         }}
         onLoad={() => {
@@ -261,12 +282,12 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
       {/* Панель переключателей карты и легенда (historical-basemaps) */}
       <div className="absolute top-16 left-4 md:left-[21.5rem] z-10 flex flex-col gap-1.5 pointer-events-auto">
         <div className="flex items-center gap-1.5 flex-wrap">
-          {/* Переключатель «Соседи» */}
+          {/* Переключатель «Соседи» (по умолчанию включён) */}
           <button
             onClick={toggleNeighbors}
             aria-pressed={showNeighbors}
             aria-label="Переключить отображение соседних государств"
-            className={`cursor-pointer px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm border transition-all flex items-center gap-1.5 backdrop-blur-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
+            className={`cursor-pointer px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border transition-all flex items-center gap-1.5 backdrop-blur-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
               showNeighbors
                 ? 'bg-[#2B2A28] text-white border-black'
                 : 'bg-white/95 text-[#5E5951] border-black/10 hover:bg-white hover:text-[#2B2A28]'
@@ -274,7 +295,7 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
           >
             <span>🗺️ Соседи</span>
             <span
-              className={`text-[9.5px] px-1 rounded font-mono ${
+              className={`text-[9.5px] px-1.5 py-0.5 rounded font-mono ${
                 showNeighbors ? 'bg-white/20 text-white' : 'bg-black/5 text-[#5E5951]'
               }`}
             >
@@ -287,7 +308,7 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
             onClick={toggleModernBorders}
             aria-pressed={showModernBorders}
             aria-label="Переключить современные государственные границы"
-            className={`cursor-pointer px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm border transition-all flex items-center gap-1.5 backdrop-blur-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
+            className={`cursor-pointer px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border transition-all flex items-center gap-1.5 backdrop-blur-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
               showModernBorders
                 ? 'bg-[#2B2A28] text-white border-black'
                 : 'bg-white/95 text-[#5E5951] border-black/10 hover:bg-white hover:text-[#2B2A28]'
@@ -295,34 +316,79 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
           >
             <span>🌐 Границы</span>
             <span
-              className={`text-[9.5px] px-1 rounded font-mono ${
+              className={`text-[9.5px] px-1.5 py-0.5 rounded font-mono ${
                 showModernBorders ? 'bg-white/20 text-white' : 'bg-black/5 text-[#5E5951]'
               }`}
             >
               {showModernBorders ? 'Вкл' : 'Выкл'}
             </span>
           </button>
+
+          {/* Кнопка сворачивания/разворачивания легенды */}
+          <button
+            onClick={() => setLegendOpen((v) => !v)}
+            aria-label={legendOpen ? 'Свернуть легенду карты' : 'Развернуть легенду карты'}
+            className="cursor-pointer px-2 py-1.5 rounded-full text-xs text-[#5E5951] bg-white/90 hover:bg-white border border-black/10 shadow-sm backdrop-blur-md transition-all flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28]"
+          >
+            <span className="text-[11px]">{legendOpen ? '▲' : '▼ Легенда'}</span>
+          </button>
         </div>
 
-        {/* Компактная легенда и атрибуция */}
-        <div className="px-2.5 py-1.5 rounded-xl bg-white/90 backdrop-blur-md shadow-sm border border-black/10 text-[10.5px] text-[#5E5951] max-w-xs space-y-1">
-          <div className="flex items-center gap-2">
-            <span
-              className="w-3 h-3 rounded shrink-0 border border-black/20"
-              style={{ backgroundColor: activeEra?.color ?? '#4F8A8B', opacity: 0.8 }}
-            />
-            <span className="font-medium text-[#2B2A28]">Фокус: кыргызские земли</span>
-          </div>
-          {showNeighbors && (
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded shrink-0 border border-black/20 bg-[#D4E2D4]" />
-              <span>Соседние государства (пастель)</span>
+        {/* Информационная легенда и атрибуция (historical-basemaps) */}
+        {legendOpen && (
+          <div className="px-3 py-2 rounded-xl bg-white/95 backdrop-blur-md shadow-md border border-black/10 text-[11px] text-[#5E5951] max-w-xs space-y-1.5 animate-fadeIn">
+            {/* Фокусное государство */}
+            <div className="flex items-start gap-2">
+              <span
+                className="w-3.5 h-3.5 rounded shrink-0 border-2 border-[#2B2A28] shadow-sm mt-0.5"
+                style={{ backgroundColor: activeEra?.color ?? '#4F8A8B', opacity: 0.85 }}
+              />
+              <div className="leading-snug">
+                <span className="font-bold text-[#2B2A28] block">
+                  Фокус: кыргызские земли
+                </span>
+                <span className="text-[10px] text-[#6B665E]">
+                  Эпоха: {activeEra?.title ?? '—'} (прозрачность ~0.45)
+                  {activeLayers.length > 1 && (
+                    <span className="block text-[9.5px] text-[#8C8275] italic">
+                      ({activeLayers.length} активных слоя, выделены отдельными контурами)
+                    </span>
+                  )}
+                </span>
+              </div>
             </div>
-          )}
-          <div className="text-[9px] leading-tight text-[#6B665E] pt-0.5 border-t border-black/5">
-            Границы схематичны, источник: <a href="https://github.com/aourednik/historical-basemaps" target="_blank" rel="noopener noreferrer" className="underline hover:text-[#2B2A28]">historical-basemaps</a> (A. Ourednik и др., GPLv3).
+
+            {/* Соседние государства */}
+            {showNeighbors && (
+              <div className="flex items-start gap-2 pt-1 border-t border-black/5">
+                <span className="w-3.5 h-3.5 rounded shrink-0 border border-[#8C8275] bg-[#D4E2D4] opacity-80 shadow-sm mt-0.5" />
+                <div className="leading-snug">
+                  <span className="font-semibold text-[#2B2A28] block">
+                    Соседние государства
+                  </span>
+                  <span className="text-[10px] text-[#6B665E] block">
+                    Пастель (~0.18), снимок ~{closestSnapshotYear > 0 ? `${closestSnapshotYear} г.` : `${Math.abs(closestSnapshotYear)} г. до н.э.`}
+                  </span>
+                  <span className="text-[9.5px] text-[#8C8275] italic block">
+                    Наведение или клик показывает название
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Обязательная атрибуция по условиям лицензии */}
+            <div className="text-[9.5px] leading-tight text-[#6B665E] pt-1.5 border-t border-black/10">
+              Границы схематичны, источник: <a
+                href="https://github.com/aourednik/historical-basemaps"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-[#2B2A28] font-medium"
+              >
+                historical-basemaps
+              </a> (A. Ourednik и др.) · <span className="text-[#8C8275]">Лицензия GNU GPLv3</span>.
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

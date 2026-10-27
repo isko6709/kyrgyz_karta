@@ -10,7 +10,7 @@ const EMPTY_GEOJSON: FeatureCollection = {
   features: [],
 };
 
-interface HoveredNeighbor {
+interface NeighborInfo {
   name: string;
   subjecto?: string;
   lng: number;
@@ -34,7 +34,10 @@ export function NeighborsLayer() {
     data: null,
   });
   const [activeSlot, setActiveSlot] = useState<'a' | 'b'>('a');
-  const [hoveredNeighbor, setHoveredNeighbor] = useState<HoveredNeighbor | null>(null);
+
+  // Состояния для hover и click по соседям
+  const [hoveredNeighbor, setHoveredNeighbor] = useState<NeighborInfo | null>(null);
+  const [clickedNeighbor, setClickedNeighbor] = useState<NeighborInfo | null>(null);
 
   const activeSlotRef = useRef(activeSlot);
   const slotARef = useRef(slotA);
@@ -52,7 +55,7 @@ export function NeighborsLayer() {
     slotBRef.current = slotB;
   }, [slotB]);
 
-  // Загрузка GeoJSON и переключение слотов
+  // Загрузка GeoJSON и переключение слотов (ленивая загрузка + кэш в contextCache)
   useEffect(() => {
     let isCancelled = false;
 
@@ -69,12 +72,14 @@ export function NeighborsLayer() {
         return;
       }
 
+      setHoveredNeighbor(null);
+
       if (currentActive === 'a') {
-        // Заполняем слот B и делаем его активным
+        // Заполняем слот B и делаем его активным (запускает crossfade 500 мс)
         setSlotB({ year: targetSnapshotYear, data });
         setActiveSlot('b');
       } else {
-        // Заполняем слот A и делаем его активным
+        // Заполняем слот A и делаем его активным (запускает crossfade 500 мс)
         setSlotA({ year: targetSnapshotYear, data });
         setActiveSlot('a');
       }
@@ -91,16 +96,30 @@ export function NeighborsLayer() {
     };
   }, [targetSnapshotYear]);
 
-  // Обработка hover / click по соседям
+  // Обработка hover и click по соседним государствам
   useEffect(() => {
     if (!mapInstance || !showNeighbors) return;
     const map = mapInstance.getMap();
 
-    const layerIds = ['context-a-fill', 'context-b-fill'];
-
     const handleMouseMove = (e: MapLayerMouseEvent) => {
-      // Ищем фичи под курсором в активных слоях соседей
-      const features = map.queryRenderedFeatures(e.point, { layers: layerIds });
+      // 1. Если курсор над фокусным слоем кыргызских земель, не показываем соседа
+      if (map.getLayer('territories-fill')) {
+        const terrFeatures = map.queryRenderedFeatures(e.point, { layers: ['territories-fill'] });
+        if (terrFeatures.length > 0) {
+          map.getCanvas().style.cursor = 'pointer';
+          setHoveredNeighbor(null);
+          return;
+        }
+      }
+
+      // 2. Ищем фичи в активном слое соседей
+      const activeFillId = activeSlotRef.current === 'a' ? 'context-a-fill' : 'context-b-fill';
+      if (!map.getLayer(activeFillId)) {
+        setHoveredNeighbor(null);
+        return;
+      }
+
+      const features = map.queryRenderedFeatures(e.point, { layers: [activeFillId] });
       if (features.length > 0) {
         const feat = features[0];
         const name = (feat.properties?.NAME as string) || '';
@@ -116,6 +135,7 @@ export function NeighborsLayer() {
           return;
         }
       }
+
       map.getCanvas().style.cursor = '';
       setHoveredNeighbor(null);
     };
@@ -125,12 +145,52 @@ export function NeighborsLayer() {
       setHoveredNeighbor(null);
     };
 
+    const handleMapClick = (e: MapLayerMouseEvent) => {
+      // Проверяем клик по фокусным территориям
+      if (map.getLayer('territories-fill')) {
+        const terrFeatures = map.queryRenderedFeatures(e.point, { layers: ['territories-fill'] });
+        if (terrFeatures.length > 0) {
+          setClickedNeighbor(null);
+          return;
+        }
+      }
+
+      // Проверяем клик по соседним государствам
+      const activeFillId = activeSlotRef.current === 'a' ? 'context-a-fill' : 'context-b-fill';
+      if (!map.getLayer(activeFillId)) {
+        setClickedNeighbor(null);
+        return;
+      }
+
+      const features = map.queryRenderedFeatures(e.point, { layers: [activeFillId] });
+      if (features.length > 0) {
+        const feat = features[0];
+        const name = (feat.properties?.NAME as string) || '';
+        const subjecto = (feat.properties?.SUBJECTO as string) || '';
+        if (name) {
+          setClickedNeighbor({
+            name,
+            subjecto: subjecto && subjecto !== name ? subjecto : undefined,
+            lng: e.lngLat.lng,
+            lat: e.lngLat.lat,
+          });
+          setHoveredNeighbor(null);
+          return;
+        }
+      }
+
+      // Клик в пустое место
+      setClickedNeighbor(null);
+    };
+
     map.on('mousemove', handleMouseMove);
     map.on('mouseout', handleMouseLeave);
+    map.on('click', handleMapClick);
 
     return () => {
       map.off('mousemove', handleMouseMove);
       map.off('mouseout', handleMouseLeave);
+      map.off('click', handleMapClick);
       map.getCanvas().style.cursor = '';
     };
   }, [mapInstance, showNeighbors]);
@@ -138,15 +198,18 @@ export function NeighborsLayer() {
   const isA = showNeighbors && activeSlot === 'a';
   const isB = showNeighbors && activeSlot === 'b';
 
+  const snapshotYearFormatted =
+    targetSnapshotYear > 0 ? `${targetSnapshotYear} г.` : `${Math.abs(targetSnapshotYear)} г. до н.э.`;
+
   return (
     <>
-      {/* Слот A */}
+      {/* Слот A: GeoJSON-источник и слои */}
       <Source id="context-source-a" type="geojson" data={slotA.data ?? EMPTY_GEOJSON}>
         <Layer
           id="context-a-fill"
           type="fill"
           paint={{
-            'fill-color': ['get', 'color'],
+            'fill-color': ['coalesce', ['get', 'color'], '#D4E2D4'],
             'fill-opacity': isA ? 0.18 : 0,
             'fill-opacity-transition': { duration: 500, delay: 0 },
           }}
@@ -168,7 +231,7 @@ export function NeighborsLayer() {
           layout={{
             'text-field': ['get', 'NAME'],
             'text-font': ['Noto Sans Regular'],
-            'text-size': 10.5,
+            'text-size': 10,
             'text-transform': 'uppercase',
             'text-letter-spacing': 0.08,
             'text-max-width': 8,
@@ -178,19 +241,19 @@ export function NeighborsLayer() {
             'text-color': '#5E5951',
             'text-halo-color': 'rgba(255, 255, 255, 0.85)',
             'text-halo-width': 1.2,
-            'text-opacity': isA ? 0.8 : 0,
+            'text-opacity': isA ? 0.75 : 0,
             'text-opacity-transition': { duration: 500, delay: 0 },
           }}
         />
       </Source>
 
-      {/* Слот B */}
+      {/* Слот B: GeoJSON-источник и слои */}
       <Source id="context-source-b" type="geojson" data={slotB.data ?? EMPTY_GEOJSON}>
         <Layer
           id="context-b-fill"
           type="fill"
           paint={{
-            'fill-color': ['get', 'color'],
+            'fill-color': ['coalesce', ['get', 'color'], '#D4E2D4'],
             'fill-opacity': isB ? 0.18 : 0,
             'fill-opacity-transition': { duration: 500, delay: 0 },
           }}
@@ -212,7 +275,7 @@ export function NeighborsLayer() {
           layout={{
             'text-field': ['get', 'NAME'],
             'text-font': ['Noto Sans Regular'],
-            'text-size': 10.5,
+            'text-size': 10,
             'text-transform': 'uppercase',
             'text-letter-spacing': 0.08,
             'text-max-width': 8,
@@ -222,14 +285,48 @@ export function NeighborsLayer() {
             'text-color': '#5E5951',
             'text-halo-color': 'rgba(255, 255, 255, 0.85)',
             'text-halo-width': 1.2,
-            'text-opacity': isB ? 0.8 : 0,
+            'text-opacity': isB ? 0.75 : 0,
             'text-opacity-transition': { duration: 500, delay: 0 },
           }}
         />
       </Source>
 
-      {/* Всплывающая подсказка с именем соседа при наведении */}
-      {showNeighbors && hoveredNeighbor && (
+      {/* Закреплённая карточка соседа по клику */}
+      {showNeighbors && clickedNeighbor && (
+        <Popup
+          longitude={clickedNeighbor.lng}
+          latitude={clickedNeighbor.lat}
+          closeButton={true}
+          onClose={() => setClickedNeighbor(null)}
+          anchor="bottom"
+          offset={14}
+        >
+          <div className="select-none px-3 py-2 bg-white rounded-xl shadow-xl border border-black/10 text-center min-w-[170px]">
+            <div className="flex items-center justify-between gap-2 border-b border-black/5 pb-1 mb-1.5">
+              <span className="text-[10px] uppercase tracking-wider text-[#6B665E] font-semibold">
+                Соседнее государство
+              </span>
+              <span className="text-[10px] font-mono text-[#5E5951] bg-[#F6F1E7] px-1.5 py-0.5 rounded border border-black/5">
+                ~{snapshotYearFormatted}
+              </span>
+            </div>
+            <div className="text-sm font-bold text-[#2B2A28]">
+              {clickedNeighbor.name}
+            </div>
+            {clickedNeighbor.subjecto && (
+              <div className="text-[11px] text-[#6B665E] mt-0.5 italic">
+                (под властью: {clickedNeighbor.subjecto})
+              </div>
+            )}
+            <div className="mt-1.5 pt-1 text-[9px] text-[#8C8275] border-t border-black/5">
+              historical-basemaps
+            </div>
+          </div>
+        </Popup>
+      )}
+
+      {/* Всплывающая подсказка с именем соседа при наведении (если не зафиксирован клик) */}
+      {showNeighbors && !clickedNeighbor && hoveredNeighbor && (
         <Popup
           longitude={hoveredNeighbor.lng}
           latitude={hoveredNeighbor.lat}
@@ -238,15 +335,15 @@ export function NeighborsLayer() {
           anchor="bottom"
           offset={12}
         >
-          <div className="pointer-events-none select-none px-2 py-1 bg-white/95 backdrop-blur-sm rounded-lg shadow-md border border-black/10 text-center">
-            <span className="text-[10px] uppercase tracking-wider text-[#5E5951] font-semibold block">
+          <div className="pointer-events-none select-none px-2.5 py-1 bg-white/95 backdrop-blur-sm rounded-lg shadow-md border border-black/10 text-center">
+            <span className="text-[9.5px] uppercase tracking-wider text-[#6B665E] font-semibold block">
               Соседнее государство
             </span>
             <span className="text-xs font-bold text-[#2B2A28]">
               {hoveredNeighbor.name}
             </span>
             {hoveredNeighbor.subjecto && (
-              <span className="text-[10px] text-[#5E5951] block italic">
+              <span className="text-[9.5px] text-[#6B665E] block italic">
                 (под властью: {hoveredNeighbor.subjecto})
               </span>
             )}
