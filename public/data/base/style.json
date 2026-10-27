@@ -25,6 +25,23 @@
       }
     },
     {
+      "id": "natural_earth_relief",
+      "type": "raster",
+      "source": "ne2_shaded",
+      "maxzoom": 7,
+      "paint": {
+        "raster-opacity": [
+          "interpolate",
+          ["exponential", 1.5],
+          ["zoom"],
+          0,
+          0.5,
+          6,
+          0.22
+        ]
+      }
+    },
+    {
       "id": "park",
       "type": "fill",
       "source": "openmaptiles",

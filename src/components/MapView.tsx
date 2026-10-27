@@ -2,11 +2,15 @@ import { useEffect, useRef, useCallback, useMemo } from 'react';
 import Map, { NavigationControl, Marker, type MapRef } from 'react-map-gl/maplibre';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import { useReducedMotion } from 'framer-motion';
 import { useStore } from '../store';
 import { events, eventsForYear } from '../lib/data';
 import { CATEGORY_CONFIG } from './EventCard';
 import { TerritoryLayers } from './TerritoryLayers';
+
+// Настройка Web Worker для MapLibre GL JS v5+ в среде Vite/SPA
+maplibregl.setWorkerUrl(maplibreWorkerUrl);
 
 // Координаты центра Кыргызстана в формате MapLibre [lng, lat]
 const KYRGYZSTAN_CENTER = {
@@ -125,6 +129,10 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
         style={{ width: '100%', height: '100%', backgroundColor: '#F6F1E7' }}
         minZoom={2}
         maxZoom={18}
+        onError={(e) => {
+          console.error('MAPLIBRE MAP ERROR:', e);
+          (window as unknown as { __MAP_ERROR__: unknown }).__MAP_ERROR__ = e;
+        }}
         onClick={(e) => {
           // Клик по фону карты снимает выбор события
           if ((e.originalEvent.target as HTMLElement).tagName === 'CANVAS') {
