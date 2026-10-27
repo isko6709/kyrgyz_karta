@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
+    "build:layers": "node scripts/build-modern-layers.mjs",
     "sync:portraits": "node scripts/sync-portraits.mjs",
     "portraits:fetch": "node scripts/portraits.mjs fetch",
     "portraits:pick": "node scripts/portraits.mjs pick",

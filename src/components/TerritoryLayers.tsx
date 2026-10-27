@@ -107,10 +107,28 @@ export function TerritoryLayers() {
     };
   }, [activeLayers, eraColor, highlightedLayerId]);
 
-  // Список слоёв-заглушек для показа подписи «схематично»
-  const fallbackMarkers = useMemo(() => {
+  // Список слоёв для показа подписи «схематично» (только приблизительные контуры или bbox-заглушки)
+  const schematicMarkers = useMemo(() => {
     return activeLayers
-      .filter((l) => getCachedLayer(l.id).status !== 'loaded')
+      .filter((l) => {
+        // Современные слои на основе официальных границ не схематичны
+        if (l.id === 'kirghiz_ao' || l.id === 'kirghiz_ssr' || l.id === 'kyrgyzstan') {
+          return false;
+        }
+        const cachedEntry = getCachedLayer(l.id);
+        if (cachedEntry.status !== 'loaded') {
+          return true; // Fallback bbox всегда схематичный
+        }
+        const data = cachedEntry.data;
+        if (!data) return true;
+        if (data.type === 'FeatureCollection' && data.features.length > 0) {
+          return data.features[0].properties?.schematic !== false;
+        }
+        if (data.type === 'Feature') {
+          return data.properties?.schematic !== false;
+        }
+        return true;
+      })
       .map((l) => {
         const [west, south, east, north] = l.bbox;
         return {
@@ -167,9 +185,9 @@ export function TerritoryLayers() {
         />
       </Source>
 
-      {/* Подписи «схематично» по центру каждого bbox */}
-      {fallbackMarkers.map((m) => (
-        <Marker key={`marker-bbox-${m.id}`} longitude={m.lng} latitude={m.lat} anchor="center">
+      {/* Подписи «схематично» по центру для приблизительных слоёв */}
+      {schematicMarkers.map((m) => (
+        <Marker key={`marker-schematic-${m.id}`} longitude={m.lng} latitude={m.lat} anchor="center">
           <div className="pointer-events-none select-none text-center">
             <span
               className="px-2 py-0.5 rounded text-[11px] font-medium tracking-wide shadow-sm border border-black/10 backdrop-blur-sm"

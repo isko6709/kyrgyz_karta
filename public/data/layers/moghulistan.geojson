@@ -1,0 +1,70 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "moghulistan",
+    "title": "Моголистан",
+    "from": 1347,
+    "to": 1514,
+    "schematic": true
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       72,
+       40
+      ],
+      [
+       73,
+       44
+      ],
+      [
+       77,
+       46
+      ],
+      [
+       82,
+       47.5
+      ],
+      [
+       88,
+       47
+      ],
+      [
+       93,
+       45
+      ],
+      [
+       94,
+       41
+      ],
+      [
+       90,
+       38
+      ],
+      [
+       84,
+       37.5
+      ],
+      [
+       78,
+       37.5
+      ],
+      [
+       74,
+       38
+      ],
+      [
+       72,
+       40
+      ]
+     ]
+    ]
+   }
+  }
+ ]
+}

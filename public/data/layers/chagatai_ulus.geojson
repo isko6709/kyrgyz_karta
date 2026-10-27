@@ -1,0 +1,70 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "properties": {
+    "id": "chagatai_ulus",
+    "title": "Улус Чагатая",
+    "from": 1227,
+    "to": 1347,
+    "schematic": true
+   },
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       58,
+       36
+      ],
+      [
+       58,
+       43
+      ],
+      [
+       64,
+       47
+      ],
+      [
+       72,
+       49
+      ],
+      [
+       82,
+       49
+      ],
+      [
+       92,
+       47
+      ],
+      [
+       95,
+       42
+      ],
+      [
+       90,
+       37
+      ],
+      [
+       80,
+       34
+      ],
+      [
+       70,
+       34
+      ],
+      [
+       62,
+       34
+      ],
+      [
+       58,
+       36
+      ]
+     ]
+    ]
+   }
+  }
+ ]
+}
