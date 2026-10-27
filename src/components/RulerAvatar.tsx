@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { getPortrait, PLACEHOLDER, loadCredits, type PortraitCredit } from '../lib/portrait';
 import type { Ruler } from '../types';
 
@@ -12,6 +13,7 @@ export function RulerAvatar({
   size?: number;
   compact?: boolean;
 }) {
+  const shouldReduceMotion = useReducedMotion();
   const { src, isPlaceholder } = getPortrait(ruler.id);
   const [failed, setFailed] = useState(false);
   const [credit, setCredit] = useState<PortraitCredit | null>(null);
@@ -43,7 +45,12 @@ export function RulerAvatar({
       style={{ width: compact ? size : size + 40 }}
       title={attributionTooltip}
     >
-      <div className="relative">
+      <motion.div
+        initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.92 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: shouldReduceMotion ? 0 : 0.25 }}
+        className="relative"
+      >
         <img
           src={showPlaceholder ? PLACEHOLDER : src}
           alt={showPlaceholder ? `Условное изображение: ${ruler.name}` : `Портрет: ${ruler.name}`}
@@ -62,7 +69,7 @@ export function RulerAvatar({
             ©
           </span>
         )}
-      </div>
+      </motion.div>
 
       {!compact && (
         <>
