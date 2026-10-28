@@ -9,12 +9,13 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "build:layers": "node scripts/build-layers.mjs",
+    "validate:data": "node scripts/validate-data.mjs",
     "sync:portraits": "node scripts/sync-portraits.mjs",
     "portraits:fetch": "node scripts/portraits.mjs fetch",
     "portraits:pick": "node scripts/portraits.mjs pick",
     "portraits:crop": "node scripts/portraits.mjs crop",
-    "predev": "npm run sync:portraits",
-    "prebuild": "npm run sync:portraits"
+    "predev": "npm run sync:portraits && npm run validate:data",
+    "prebuild": "npm run sync:portraits && npm run validate:data"
   },
   "dependencies": {
     "framer-motion": "^14.7.0",
