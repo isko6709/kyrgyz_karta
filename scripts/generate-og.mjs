@@ -34,16 +34,16 @@ const svg = `
   <g transform="translate(410, 340)">
     <rect width="280" height="56" rx="28" fill="#FFFFFF" stroke="#2B2A28" stroke-width="1" stroke-opacity="0.1"/>
     <circle cx="32" cy="28" r="8" fill="#B08D57"/>
-    <text x="54" y="35" font-family="sans-serif, Arial" font-size="18" font-weight="600" fill="#2B2A28">66 правителей и ханов</text>
+    <text x="54" y="35" font-family="sans-serif, Arial" font-size="18" font-weight="600" fill="#2B2A28">80 правителей и деятелей</text>
   </g>
 
   <g transform="translate(720, 340)">
     <rect width="280" height="56" rx="28" fill="#FFFFFF" stroke="#2B2A28" stroke-width="1" stroke-opacity="0.1"/>
     <circle cx="32" cy="28" r="8" fill="#D9A441"/>
-    <text x="54" y="35" font-family="sans-serif, Arial" font-size="18" font-weight="600" fill="#2B2A28">15 исторических слоёв</text>
+    <text x="54" y="35" font-family="sans-serif, Arial" font-size="18" font-weight="600" fill="#2B2A28">24 исторических слоя</text>
   </g>
 
-  <text x="100" y="500" font-family="sans-serif, Arial" font-size="18" fill="#8C8275">2000 г. до н.э. — 2026 г. • Интерактивный таймлайн и светлая картография</text>
+  <text x="100" y="500" font-family="sans-serif, Arial" font-size="18" fill="#5E5951">2000 г. до н.э. — 2026 г. • Интерактивный таймлайн и светлая картография</text>
 </svg>
 `;
 

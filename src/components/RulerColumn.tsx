@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { m, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { rulersForYear, layersForYear, layers, events } from '../lib/data';
 import { useStore } from '../store';
 import { RulerAvatar } from './RulerAvatar';
+import { useLayerCacheEntry, isLayerWithoutPolygon } from '../lib/layersCache';
 import type { Ruler } from '../types';
 
 export function RulerColumn() {
@@ -54,6 +55,9 @@ export function RulerColumn() {
   const primaryLayer = sortedLayers[0] ?? null;
   const otherLayers = sortedLayers.slice(1);
 
+  const primaryLayerEntry = useLayerCacheEntry(primaryLayer?.id);
+  const isPrimaryWithoutPolygon = primaryLayer ? isLayerWithoutPolygon(primaryLayerEntry) : false;
+
   const handleRulerClick = (ruler: Ruler) => {
     if (!ruler.layer) return;
     setHighlightedLayerId(highlightedLayerId === ruler.layer ? null : ruler.layer);
@@ -66,7 +70,7 @@ export function RulerColumn() {
         className="hidden md:flex absolute left-4 top-14 bottom-32 w-72 md:w-80 z-10 flex-col pointer-events-none"
         aria-label="Правители и исторические деятели"
       >
-        <div className="pointer-events-auto flex-1 flex flex-col bg-white/95 backdrop-blur-md rounded-[16px] shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-black/5 p-4 overflow-hidden">
+        <div className="pointer-events-auto flex-1 flex flex-col bg-[#FDFBF7] rounded-[16px] shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-black/5 p-4 overflow-hidden">
           {/* Шапка: Название государства ЗАГЛАВНЫМИ БУКВАМИ и второстепенные слои */}
           <header className="border-b border-black/10 pb-3">
             <div className="flex items-center justify-between">
@@ -86,6 +90,14 @@ export function RulerColumn() {
               {primaryLayer ? primaryLayer.title.toUpperCase() : 'КЫРГЫЗСКИЕ ЗЕМЛИ'}
             </h2>
 
+            {/* Статус границ: если границы неизвестны/не восстановлены */}
+            {primaryLayer && isPrimaryWithoutPolygon && (
+              <div className="mt-2 px-2.5 py-1.5 rounded-lg bg-amber-50/90 border border-amber-300 text-[11px] text-amber-900 flex items-center gap-1.5 shadow-xs">
+                <span aria-hidden="true" className="text-xs">⚠️</span>
+                <span className="font-medium leading-tight">Границы неизвестны или не восстановлены</span>
+              </div>
+            )}
+
             {/* Дополнительные слои мелким интерактивным списком */}
             {otherLayers.length > 0 && (
               <div className="mt-2 pt-2 border-t border-black/5">
@@ -102,16 +114,16 @@ export function RulerColumn() {
                             setHighlightedLayerId(isHighlighted ? null : l.id)
                           }
                           aria-pressed={isHighlighted}
-                          aria-label={`Слой ${l.title}: ${l.from}–${l.to} гг. Нажмите для подсветки на карте.`}
-                          className={`cursor-pointer w-full text-left flex items-center justify-between text-[11px] px-1.5 py-0.5 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
+                          aria-label={`${l.title}: ${l.from < 0 ? `${Math.abs(l.from)} до н.э.` : l.from}–${l.to < 0 ? `${Math.abs(l.to)} до н.э.` : l.to}. Нажмите для подсветки на карте`}
+                          className={`cursor-pointer w-full text-left flex items-center justify-between text-xs px-2 py-1.5 min-h-[28px] my-0.5 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
                             isHighlighted
                               ? 'bg-[#2C6466]/15 text-[#2B2A28] font-semibold ring-1 ring-[#2C6466]/30'
-                              : 'text-[#5E5951] hover:bg-black/5 hover:text-[#2B2A28]'
+                              : 'text-[#1F1E1D] hover:bg-black/5'
                           }`}
                           title={l.note ? `${l.title}: ${l.note}` : l.title}
                         >
                           <span className="truncate">{l.title}</span>
-                          <span className="text-[9.5px] opacity-75 shrink-0 ml-1.5">
+                          <span className="text-[9.5px] text-[#4A463F] font-medium shrink-0 ml-1.5">
                             {l.from < 0 ? `${Math.abs(l.from)} до н.э.` : l.from}–
                             {l.to < 0 ? `${Math.abs(l.to)} до н.э.` : l.to}
                           </span>
@@ -152,7 +164,7 @@ export function RulerColumn() {
                     const linkedLayer = ruler.layer ? layers.find((l) => l.id === ruler.layer) : null;
 
                     return (
-                      <motion.button
+                      <m.button
                         key={ruler.id}
                         layout={!shouldReduceMotion}
                         initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.92 }}
@@ -161,7 +173,7 @@ export function RulerColumn() {
                         transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
                         onClick={() => handleRulerClick(ruler)}
                         aria-pressed={isLayerActive}
-                        aria-label={`${isCulture ? 'Деятель культуры' : 'Правитель'} ${ruler.name}, ${ruler.display}.${linkedLayer ? ` Государство: ${linkedLayer.title}. Нажмите для подсветки территории.` : ''}`}
+                        aria-label={`${ruler.name}, ${isCulture ? 'деятель культуры' : 'правитель'}, ${ruler.display}.${linkedLayer ? ` Государство: ${linkedLayer.title}. Подсветить территорию` : ''}`}
                         className={`cursor-pointer w-full p-2 rounded-xl transition-all flex flex-col items-center border text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
                           isLayerActive
                             ? 'bg-white border-[#2C6466] ring-2 ring-[#2C6466]/30 shadow-md scale-102'
@@ -213,7 +225,7 @@ export function RulerColumn() {
                             {isLayerActive ? '● Слой подсвечен' : 'Слой на карте'}
                           </span>
                         )}
-                      </motion.button>
+                      </m.button>
                     );
                   })}
                 </AnimatePresence>
@@ -238,16 +250,21 @@ export function RulerColumn() {
                   setHighlightedLayerId(highlightedLayerId === primaryLayer.id ? null : primaryLayer.id);
                 }
               }}
-              aria-label={`Государство: ${primaryLayer ? primaryLayer.title : 'Кыргызские земли'}. Нажмите для подсветки на карте.`}
-              className={`cursor-pointer min-h-[40px] px-3 py-1 rounded-full backdrop-blur-md shadow-sm border text-left text-xs transition-all flex items-center gap-1.5 max-w-[62%] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D] ${
+              aria-label={`${primaryLayer ? (primaryLayer.shortTitle || primaryLayer.title) : 'Кыргызские земли'}: нажать для подсветки на карте`}
+              className={`cursor-pointer min-h-[40px] px-3 py-1 rounded-full shadow-sm border text-left text-xs transition-all flex items-center gap-1.5 max-w-[62%] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D] ${
                 primaryLayer && highlightedLayerId === primaryLayer.id
                   ? 'bg-[#2C6466] text-white border-[#2C6466]'
-                  : 'bg-white/95 text-[#1F1E1D] border-black/10 hover:border-black/20'
+                  : 'bg-[#FDFBF7] text-[#1F1E1D] border-black/10 hover:border-black/20'
               }`}
             >
               <span className="font-serif font-bold uppercase truncate">
                 {primaryLayer ? (primaryLayer.shortTitle || primaryLayer.title) : 'Кыргызские земли'}
               </span>
+              {isPrimaryWithoutPolygon && (
+                <span className="text-[10px] text-amber-800 bg-amber-100/90 px-1.5 py-0.2 rounded border border-amber-300 shrink-0 font-sans font-normal" title="Границы неизвестны или не восстановлены">
+                  ⚠️ Без границ
+                </span>
+              )}
               {otherLayers.length > 0 && (
                 <span className="text-[10px] opacity-75 shrink-0">
                   +{otherLayers.length}
@@ -259,8 +276,8 @@ export function RulerColumn() {
             <button
               type="button"
               onClick={() => setMobileSheetOpen(true)}
-              aria-label="Открыть список событий хроники"
-              className="cursor-pointer min-h-[40px] px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md shadow-sm border border-black/10 text-xs font-semibold text-[#1F1E1D] flex items-center gap-1.5 active:scale-95 transition-all shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D]"
+              aria-label={`Хроника: открыть список событий (${exactYearCount})`}
+              className="cursor-pointer min-h-[40px] px-3.5 py-1.5 rounded-full bg-[#FDFBF7] shadow-sm border border-black/10 text-xs font-semibold text-[#1F1E1D] flex items-center gap-1.5 active:scale-95 transition-all shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D]"
             >
               <span className="text-sm">📋</span>
               <span>Хроника</span>
@@ -286,7 +303,7 @@ export function RulerColumn() {
                   const isCulture = ruler.figureType === 'culture';
 
                   return (
-                    <motion.button
+                    <m.button
                       key={`mob-${ruler.id}`}
                       layout={!shouldReduceMotion}
                       initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.9 }}
@@ -295,8 +312,8 @@ export function RulerColumn() {
                       transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
                       onClick={() => handleRulerClick(ruler)}
                       aria-pressed={isLayerActive}
-                      aria-label={`${isCulture ? 'Деятель культуры' : 'Правитель'} ${ruler.name}. ${ruler.layer ? 'Подсветить территорию' : ''}`}
-                      className={`cursor-pointer shrink-0 min-h-[46px] flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-white/95 backdrop-blur-md shadow-sm border transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D] ${
+                      aria-label={`${ruler.name}: ${isCulture ? 'деятель культуры' : 'правитель'}. ${ruler.layer ? 'Подсветить территорию' : ''}`}
+                      className={`cursor-pointer shrink-0 min-h-[46px] flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-[#FDFBF7] shadow-sm border transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D] ${
                         isLayerActive
                           ? 'border-[#2C6466] ring-2 ring-[#2C6466]/30'
                           : 'border-black/10 hover:border-black/20'
@@ -326,7 +343,7 @@ export function RulerColumn() {
                             : ruler.display}
                         </div>
                       </div>
-                    </motion.button>
+                    </m.button>
                   );
                 })}
               </AnimatePresence>

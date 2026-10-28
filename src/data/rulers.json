@@ -917,9 +917,9 @@
       "to": 1933,
       "era": "soviet",
       "layer": "kirghiz_ao",
-      "imageType": "historical-art",
+      "imageType": "photo",
       "commonsQuery": "Toktogul Satylganov",
-      "certainty": "medium",
+      "certainty": "high",
       "note": "",
       "figureType": "culture"
     },

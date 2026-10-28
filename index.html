@@ -6,7 +6,7 @@
     <title>Кыргызстан сквозь века — интерактивная карта истории</title>
     <meta
       name="description"
-      content="Интерактивная карта истории Кыргызстана от енисейских кыргызов до наших дней: шкала от 2000 до н.э. до 2026 г., исторические слои территорий, 66 правителей и более 90 ключевых событий."
+      content="Интерактивная карта истории Кыргызстана от енисейских кыргызов до наших дней: шкала от 2000 до н.э. до 2026 г., 24 исторических слоя территорий, 80 правителей и деятелей культуры, более 90 ключевых событий."
     />
     <meta
       name="keywords"
@@ -42,10 +42,28 @@
     <!-- Google Fonts (Lora + Inter with Cyrillic) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,500;0,600;0,700;1,400&display=swap"
-      rel="stylesheet"
-    />
+    <script>
+      (function () {
+        function loadFonts() {
+          var link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href =
+            'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Lora:wght@600;700&display=swap';
+          document.head.appendChild(link);
+        }
+        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+          window.requestIdleCallback(loadFonts, { timeout: 3500 });
+        } else {
+          setTimeout(loadFonts, 2000);
+        }
+      })();
+    </script>
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Lora:wght@600;700&display=swap"
+      />
+    </noscript>
   </head>
   <body>
     <div id="root"></div>

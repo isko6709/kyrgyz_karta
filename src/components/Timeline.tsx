@@ -141,7 +141,7 @@ export function Timeline() {
 
   return (
     <footer
-      className="absolute bottom-0 inset-x-0 h-28 sm:h-28 z-20 bg-white/95 backdrop-blur-md border-t border-black/10 px-3 sm:px-6 flex flex-col md:flex-row md:items-center justify-between gap-1.5 md:gap-6 pointer-events-auto select-none shadow-[0_-4px_20px_rgba(0,0,0,0.04)]"
+      className="absolute bottom-0 inset-x-0 h-28 sm:h-28 z-20 bg-[#FDFBF7] border-t border-black/10 px-3 sm:px-6 flex flex-col md:flex-row md:items-center justify-between gap-1.5 md:gap-6 pointer-events-auto select-none shadow-[0_-4px_20px_rgba(0,0,0,0.04)]"
       role="region"
       aria-label="Временная шкала истории"
     >
@@ -156,8 +156,8 @@ export function Timeline() {
                 ? 'bg-amber-600 text-white hover:bg-amber-700'
                 : 'bg-black/5 hover:bg-black/10 text-[#2B2A28]'
             }`}
-            title={playing ? 'Пауза (Пробел)' : 'Воспроизведение (Пробел)'}
-            aria-label={playing ? 'Пауза хроники' : 'Воспроизведение хроники'}
+            title={playing ? 'Пауза (Пробел)' : 'Play (Пробел)'}
+            aria-label={playing ? 'Пауза: остановить воспроизведение' : 'Play: запустить воспроизведение хроники'}
           >
             <span aria-hidden="true">{playing ? '⏸' : '▶'}</span>
             <span className="hidden sm:inline">{playing ? 'Пауза' : 'Play'}</span>
@@ -213,8 +213,11 @@ export function Timeline() {
 
       {/* Центральная часть: Эпохи, Метки событий и Слайдер */}
       <div className="flex-1 flex flex-col justify-center max-w-4xl px-0 md:px-2 pb-1 md:pb-0">
-        {/* 1. Сегменты эпох с подписями */}
-        <div className="relative h-3.5 sm:h-4 w-full flex rounded-t-md overflow-hidden border-x border-t border-black/10 shadow-inner">
+        {/* 1. Сегменты эпох с подписями (визуальный индикатор) */}
+        <div
+          className="relative h-3.5 sm:h-4 w-full flex rounded-t-md overflow-hidden border-x border-t border-black/10 shadow-inner"
+          aria-hidden="true"
+        >
           {eras.map((era) => {
             const p0 = toPos(era.from);
             const p1 = toPos(era.to);
@@ -223,13 +226,11 @@ export function Timeline() {
             const isActive = activeEra?.id === era.id;
 
             return (
-              <button
+              <div
                 key={era.id}
                 onClick={() => setYear(era.from)}
-                title={`${era.title} (${formatYear(era.from)} – ${formatYear(era.to)})`}
-                aria-label={`Эпоха: ${era.title}, переход к ${formatYear(era.from)}`}
-                className={`absolute top-0 bottom-0 flex items-center justify-center cursor-pointer transition-all border-r border-white/20 px-0.5 overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:z-20 ${
-                  isActive ? 'opacity-100 z-10' : 'opacity-65 hover:opacity-90'
+                className={`absolute top-0 bottom-0 flex items-center justify-center cursor-pointer transition-all border-r border-white/30 px-0.5 overflow-hidden ${
+                  isActive ? 'ring-2 ring-black/50 z-10' : 'hover:brightness-95'
                 }`}
                 style={{
                   left: `${left}%`,
@@ -237,10 +238,10 @@ export function Timeline() {
                   backgroundColor: era.color,
                 }}
               >
-                <span className="text-[8.5px] sm:text-[9px] text-white font-medium truncate pointer-events-none drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">
+                <span className="text-[8.5px] sm:text-[9px] text-[#1F1E1D] font-bold truncate pointer-events-none drop-shadow-[0_1px_0_rgba(255,255,255,0.7)]">
                   {ERA_SHORT_TITLES[era.id] ?? era.title}
                 </span>
-              </button>
+              </div>
             );
           })}
         </div>
@@ -281,23 +282,14 @@ export function Timeline() {
             return (
               <div
                 key={`interval-${ev.id}`}
-                role="button"
-                tabIndex={0}
-                aria-label={`Период события: ${ev.date}, ${ev.title}${isPlanned ? ' (планируемое)' : ''}`}
+                aria-hidden="true"
                 onClick={(e) => {
                   e.stopPropagation();
                   selectEvent(ev.id);
                 }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    selectEvent(ev.id);
-                  }
-                }}
                 onPointerEnter={() => setHoveredEvent(ev)}
                 onPointerLeave={() => setHoveredEvent(null)}
-                className={`absolute top-1.5 h-2 rounded transition-all cursor-pointer after:absolute after:-inset-y-2 after:inset-x-0 after:content-[''] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D] focus-visible:z-30 ${
+                className={`absolute top-1.5 h-2 rounded transition-all cursor-pointer after:absolute after:-inset-y-2 after:inset-x-0 after:content-[''] ${
                   isPlanned
                     ? 'border-2 border-dashed border-[#C0825A] bg-[#C0825A]/25'
                     : isSelected
@@ -322,23 +314,14 @@ export function Timeline() {
             return (
               <div
                 key={`point-${ev.id}`}
-                role="button"
-                tabIndex={0}
-                aria-label={`Событие: ${ev.date}, ${ev.title}${isPlanned ? ' (планируемое)' : ''}`}
+                aria-hidden="true"
                 onClick={(e) => {
                   e.stopPropagation();
                   selectEvent(ev.id);
                 }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    selectEvent(ev.id);
-                  }
-                }}
                 onPointerEnter={() => setHoveredEvent(ev)}
                 onPointerLeave={() => setHoveredEvent(null)}
-                className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full cursor-pointer transition-all after:absolute after:-inset-3 after:content-[''] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D] focus-visible:z-30 ${
+                className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full cursor-pointer transition-all after:absolute after:-inset-3 after:content-[''] ${
                   isPlanned
                     ? 'w-2.5 h-2.5 border-2 border-dashed border-[#D9A441] bg-white'
                     : isSelected

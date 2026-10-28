@@ -4,7 +4,7 @@ import type { MapLayerMouseEvent } from 'maplibre-gl';
 import type { Feature, FeatureCollection } from 'geojson';
 import { layers, layersForYear, eraForYear } from '../lib/data';
 import { useStore } from '../store';
-import { loadLayerGeoJson, getCachedLayer } from '../lib/layersCache';
+import { loadLayerGeoJson, getCachedLayer, subscribeLayerCache } from '../lib/layersCache';
 import { computeGeometryArea } from '../lib/contextCache';
 
 /**
@@ -71,6 +71,7 @@ interface HoveredTerritory {
   years: string;
   note?: string;
   isSchematic: boolean;
+  isApproximate: boolean;
   lng: number;
   lat: number;
 }
@@ -97,26 +98,24 @@ export function TerritoryLayers() {
   const activeEra = useMemo(() => eraForYear(year), [year]);
   const eraColor = activeEra?.color ?? '#4F8A8B';
 
-  const [, setCacheRevision] = useState(0);
+  const [cacheRevision, setCacheRevision] = useState(0);
 
-  // Загружаем GeoJSON для активных слоёв с кэшированием и обработкой ошибок
+  // Загружаем GeoJSON для активных слоёв с кэшированием и реактивной перерисовкой
   useEffect(() => {
-    let active = true;
-
     for (const l of activeLayers) {
       const entry = getCachedLayer(l.id);
       if (entry.status === 'idle') {
-        loadLayerGeoJson(l.id).then(() => {
-          if (active) {
-            setCacheRevision((r) => r + 1);
-          }
-        });
+        loadLayerGeoJson(l.id);
       }
     }
 
-    return () => {
-      active = false;
-    };
+    const unsubscribe = subscribeLayerCache((layerId) => {
+      if (activeLayers.some((l) => l.id === layerId)) {
+        setCacheRevision((r) => r + 1);
+      }
+    });
+
+    return unsubscribe;
   }, [activeLayers]);
 
   // Интерактивность при наведении на полигоны или подписи слоя (всплывающая подсказка с полным названием)
@@ -144,6 +143,7 @@ export function TerritoryLayers() {
         const years = (feat.properties?.years as string) || '';
         const note = (feat.properties?.note as string) || undefined;
         const isSchematic = Boolean(feat.properties?.isSchematic);
+        const isApproximate = Boolean(feat.properties?.isApproximate);
 
         if (id && fullTitle) {
           map.getCanvas().style.cursor = 'pointer';
@@ -153,6 +153,7 @@ export function TerritoryLayers() {
             years,
             note,
             isSchematic,
+            isApproximate,
             lng: e.lngLat.lng,
             lat: e.lngLat.lat,
           });
@@ -191,45 +192,45 @@ export function TerritoryLayers() {
       const borderColor = getLayerBorderColor(i, isHighlighted);
 
       let isSchematic = false;
+      let isApproximate = false;
       let rawGeom: unknown = null;
 
       if (cached) {
-        if (cached.type === 'FeatureCollection' && cached.features.length > 0) {
-          rawGeom = cached.features[0].geometry;
-          isSchematic = cached.features[0].properties?.schematic !== false;
-        } else if (cached.type === 'Feature') {
-          rawGeom = cached.geometry;
-          isSchematic = cached.properties?.schematic !== false;
+        const feat =
+          cached.type === 'FeatureCollection' && cached.features.length > 0
+            ? cached.features[0]
+            : cached.type === 'Feature'
+            ? cached
+            : null;
+
+        if (feat) {
+          rawGeom = feat.geometry;
+          isApproximate = Boolean(
+            feat.properties?.approximate === true ||
+              feat.properties?.type === 'approximate-admin'
+          );
+          isSchematic = Boolean(feat.properties?.schematic !== false && !isApproximate);
         }
       }
 
       if (l.id === 'kirghiz_ao' || l.id === 'kirghiz_ssr' || l.id === 'kyrgyzstan') {
         isSchematic = false;
+        isApproximate = false;
       }
 
-      const [west, south, east, north] = l.bbox;
-      const fallbackGeom = {
-        type: 'Polygon' as const,
-        coordinates: [
-          [
-            [west, south],
-            [east, south],
-            [east, north],
-            [west, north],
-            [west, south],
-          ],
-        ],
-      };
+      // Строгое правило: если у слоя нет геометрии, НЕ рисуем никаких прямоугольников!
+      if (!rawGeom) {
+        continue;
+      }
 
-      const finalGeom = rawGeom || fallbackGeom;
-      const area = Math.round(computeGeometryArea(finalGeom) * 10) / 10;
+      const area = Math.round(computeGeometryArea(rawGeom) * 10) / 10;
       // Приоритет по площади: крупные государства первыми в очереди collision
       const sortKey = 10000000 - Math.min(10000000, Math.round(area * 100));
       // При zoom < 4 отображаем только крупные территории (area >= 20)
       const isMajor = area >= 20;
 
       const shortTitle = (l.shortTitle || l.title).toUpperCase();
-      const mapLabel = shortTitle + (isSchematic ? '\n(СХЕМАТИЧНО)' : '');
+      const mapLabel = shortTitle;
       const years = `${l.from < 0 ? `${Math.abs(l.from)} до н.э.` : l.from}–${l.to < 0 ? `${Math.abs(l.to)} до н.э.` : l.to} гг.`;
 
       const commonProps = {
@@ -242,10 +243,11 @@ export function TerritoryLayers() {
         note: l.note || '',
         color: layerColor,
         borderColor,
-        isFallback: !cached,
+        isFallback: false,
         isHighlighted,
         isDebugSelected,
         isSchematic,
+        isApproximate,
         area,
         sortKey,
         isMajor,
@@ -272,13 +274,6 @@ export function TerritoryLayers() {
             },
           });
         }
-      } else {
-        features.push({
-          type: 'Feature',
-          id: l.id,
-          properties: commonProps,
-          geometry: fallbackGeom,
-        });
       }
     }
 
@@ -286,12 +281,12 @@ export function TerritoryLayers() {
       type: 'FeatureCollection',
       features,
     };
-  }, [activeLayers, eraColor, highlightedLayerId, debugSelectedLayerId]);
+  }, [activeLayers, eraColor, highlightedLayerId, debugSelectedLayerId, cacheRevision]);
 
   return (
     <>
       <Source id="territories-source" type="geojson" data={geojson}>
-        {/* Заливка фокусного государства: fill-opacity ~0.45, два слоя не скрывают друг друга */}
+        {/* Заливка фокусного государства: fill-opacity ~0.45, при подсветке 0.65 */}
         <Layer
           id="territories-fill"
           type="fill"
@@ -307,7 +302,7 @@ export function TerritoryLayers() {
           }}
         />
 
-        {/* Контур фокусного государства: заметно толще соседних (2.6..3.6 px vs 0.8 px) */}
+        {/* Контур государства: заметно толще фонового (2.6..3.6 px vs 0.8 px) */}
         <Layer
           id="territories-line"
           type="line"
@@ -342,7 +337,8 @@ export function TerritoryLayers() {
 
         {/* Подписи слоёв на карте:
             - shortTitle (до 22 символов) заглавными буквами
-            - не обрезаются (symbol-avoid-edges: true, text-max-width: 10)
+            - для ориентировочных: пометка (ОРИЕНТИРОВОЧНАЯ ОБЛАСТЬ, НЕ ГРАНИЦА ГОСУДАРСТВА)
+            - не обрезаются (symbol-avoid-edges: true, text-max-width: 12)
             - не налезают (text-allow-overlap: false, symbol-sort-key по площади)
             - при zoom < 4 — только крупные (area >= 20)
             - halo для максимальной читаемости (2.6px halo с размытием 1.0)
@@ -356,15 +352,13 @@ export function TerritoryLayers() {
             'text-size': [
               'step',
               ['zoom'],
-              // При zoom < 4 — только крупные
               ['case', ['get', 'isMajor'], 11, 0],
-              // При zoom >= 4 — все слои, крупнее при подсветке
               4,
               ['case', ['get', 'isHighlighted'], 13, 11],
             ],
             'text-transform': 'uppercase',
             'text-letter-spacing': 0.08,
-            'text-max-width': 10,
+            'text-max-width': 12,
             'text-padding': 6,
             'symbol-avoid-edges': true,
             'text-allow-overlap': false,
@@ -403,11 +397,6 @@ export function TerritoryLayers() {
             <div className="text-xs font-bold text-[#2B2A28] leading-snug">
               {hoveredTerritory.fullTitle}
             </div>
-            {hoveredTerritory.isSchematic && (
-              <div className="text-[10px] text-[#8C8275] italic mt-0.5">
-                (границы схематичны)
-              </div>
-            )}
             {hoveredTerritory.note && (
               <div className="text-[10.5px] text-[#5E5951] mt-1 border-t border-black/5 pt-1 text-left">
                 {hoveredTerritory.note}

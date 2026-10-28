@@ -1,7 +1,8 @@
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { m, AnimatePresence, useReducedMotion } from 'framer-motion';
 import type { HistEvent } from '../types';
 import { layers } from '../lib/data';
 import { CATEGORY_CONFIG, CERTAINTY_CONFIG } from '../lib/categories';
+import { useLayerCacheEntry, isLayerWithoutPolygon } from '../lib/layersCache';
 
 export { CATEGORY_CONFIG, CERTAINTY_CONFIG };
 
@@ -20,9 +21,11 @@ export function EventCard({ event, isSelected, onSelect }: EventCardProps) {
   };
   const cert = CERTAINTY_CONFIG[event.certainty] ?? CERTAINTY_CONFIG.high;
   const linkedLayer = event.layer ? layers.find((l) => l.id === event.layer) : null;
+  const layerEntry = useLayerCacheEntry(event.layer);
+  const layerWithoutPolygon = event.layer ? isLayerWithoutPolygon(layerEntry) : false;
 
   return (
-    <motion.article
+    <m.article
       layout={!shouldReduceMotion}
       initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -30,7 +33,8 @@ export function EventCard({ event, isSelected, onSelect }: EventCardProps) {
       transition={{ duration: shouldReduceMotion ? 0 : 0.2, ease: 'easeOut' }}
       tabIndex={0}
       role="button"
-      aria-label={`Событие ${event.date}: ${event.title}. Нажмите для подробностей.`}
+      title="Нажмите для показа события на карте"
+      aria-expanded={isSelected}
       onClick={() => onSelect(event.id)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -43,7 +47,6 @@ export function EventCard({ event, isSelected, onSelect }: EventCardProps) {
           ? 'bg-white border-[#2C6466] shadow-md ring-2 ring-[#2C6466]/20'
           : 'bg-[#FDFBF7] border-black/5 hover:bg-white hover:border-black/15 hover:shadow-sm'
       }`}
-      aria-expanded={isSelected}
     >
       {/* Шапка карточки: категория, дата и бейдж достоверности с тултипом */}
       <header className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
@@ -117,7 +120,7 @@ export function EventCard({ event, isSelected, onSelect }: EventCardProps) {
       {/* Раскрывающийся блок подробностей при выборе события */}
       <AnimatePresence>
         {isSelected && (
-          <motion.footer
+          <m.footer
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
@@ -125,9 +128,17 @@ export function EventCard({ event, isSelected, onSelect }: EventCardProps) {
             className="mt-3 pt-2.5 border-t border-black/10 flex flex-col gap-1.5 text-[11px] text-[#6B665E]"
           >
             {linkedLayer && (
-              <div className="flex items-center gap-1.5">
-                <span className="font-medium text-[#2B2A28]">Территория:</span>
-                <span className="truncate">{linkedLayer.title}</span>
+              <div className="flex flex-col gap-0.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-medium text-[#2B2A28]">Территория:</span>
+                  <span className="truncate">{linkedLayer.title}</span>
+                </div>
+                {layerWithoutPolygon && (
+                  <div className="text-[10px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 mt-0.5 flex items-center gap-1 font-sans">
+                    <span>⚠️</span>
+                    <span>Границы неизвестны или не восстановлены (показан маркер события)</span>
+                  </div>
+                )}
               </div>
             )}
             <div className="flex items-center justify-between">
@@ -139,9 +150,9 @@ export function EventCard({ event, isSelected, onSelect }: EventCardProps) {
             <div className="text-[10px] text-[#4F8A8B] italic mt-0.5">
               Нажмите ещё раз, чтобы свернуть карточку
             </div>
-          </motion.footer>
+          </m.footer>
         )}
       </AnimatePresence>
-    </motion.article>
+    </m.article>
   );
 }

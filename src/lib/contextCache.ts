@@ -76,8 +76,9 @@ export async function loadContextGeoJson(snapshotYear: number): Promise<FeatureC
 
   pendingRequests[snapshotYear] = fetch(url)
     .then(async (res) => {
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      const ct = res.headers.get('content-type') || '';
+      if (!res.ok || ct.includes('text/html')) {
+        throw new Error(`HTTP ${res.status}: Invalid JSON content type`);
       }
       const data = (await res.json()) as FeatureCollection;
       if (data && Array.isArray(data.features)) {

@@ -6,14 +6,14 @@
  * 2. Существование era и layer у всех записей events и rulers
  * 3. Корректность временных диапазонов: from <= to, year <= yearEnd
  * 4. Допустимость значений certainty: 'high' | 'medium' | 'debated'
- * 5. Наличие GeoJSON файла (базового или оверрайда) или пометки schematic для каждого слоя
+ * 5. Наличие GeoJSON файла или пометки "approximate" для каждого слоя; строгий запрет bbox-заглушек
  * 6. Соответствие файлов портретов в public/portraits/ списку id правителей (и запрет портретов для imageType: "none")
  * 7. Координаты в допустимых пределах (lat: [-90, 90], lng: [-180, 180], bbox)
  *
  * При ошибках выводит подробный отчёт и завершает процесс с кодом 1.
  */
 
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { join, extname, basename } from 'node:path';
 
 const root = process.cwd();
@@ -41,6 +41,7 @@ function addWarning(category, entityId, message) {
 // -------------------------------------------------------------
 const eventsPath = join(root, 'src/data/events.json');
 const rulersPath = join(root, 'src/data/rulers.json');
+const mappingPath = join(root, 'docs/layers-mapping.json');
 const portraitsDir = join(root, 'public/portraits');
 
 if (!existsSync(eventsPath)) {
@@ -54,6 +55,7 @@ if (!existsSync(rulersPath)) {
 
 let eventsJson;
 let rulersJson;
+let mappingJson = null;
 
 try {
   eventsJson = JSON.parse(readFileSync(eventsPath, 'utf8'));
@@ -67,6 +69,12 @@ try {
 } catch (e) {
   console.error(`${RED}ОШИБКА: Синтаксическая ошибка в ${rulersPath}: ${e.message}${RESET}`);
   process.exit(1);
+}
+
+if (existsSync(mappingPath)) {
+  try {
+    mappingJson = JSON.parse(readFileSync(mappingPath, 'utf8'));
+  } catch {}
 }
 
 const eras = eventsJson.eras || [];
@@ -156,33 +164,65 @@ for (const layer of layers) {
     }
   }
 
-  // Проверка наличия GeoJSON-файла или пометки schematic
+  // 5. Проверка наличия GeoJSON-файла или пометки "approximate", и строгий запрет bbox-заглушек
   const overrideFile = join(root, 'public/data/layers-override', `${layer.id}.geojson`);
   const baseFile = join(root, 'public/data/layers', `${layer.id}.geojson`);
   const fileExists = existsSync(overrideFile) || existsSync(baseFile);
 
-  const isMarkedSchematicInNote =
-    typeof layer.note === 'string' && layer.note.toLowerCase().includes('схематич');
-  const isMarkedSchematicField = layer.schematic === true;
+  const mapItem = mappingJson ? mappingJson[layer.id] : null;
+  const isApproximate =
+    layer.approximate === true ||
+    mapItem?.approximate === true ||
+    mapItem?.type === 'approximate-admin' ||
+    (typeof layer.note === 'string' &&
+      (layer.note.toLowerCase().includes('approximate') ||
+        layer.note.toLowerCase().includes('ориентировочн') ||
+        layer.note.toLowerCase().includes('схематич')));
 
   if (fileExists) {
-    // Проверяем валидность файла
+    // Проверяем валидность файла и отсутствие запрещённых прямоугольных bbox-заглушек
     const filePath = existsSync(overrideFile) ? overrideFile : baseFile;
     try {
       const geojson = JSON.parse(readFileSync(filePath, 'utf8'));
       if (!geojson || (geojson.type !== 'FeatureCollection' && geojson.type !== 'Feature')) {
         addError('Слои (GeoJSON)', layer.id, `Файл ${filePath} не является валидным Feature или FeatureCollection`);
+      } else {
+        const features =
+          geojson.type === 'FeatureCollection'
+            ? geojson.features
+            : [geojson];
+
+        for (const feat of features) {
+          const geom = feat?.geometry;
+          if (geom && geom.type === 'Polygon' && Array.isArray(geom.coordinates) && geom.coordinates[0]?.length === 5) {
+            const ring = geom.coordinates[0];
+            const [w, s, e, n] = layer.bbox;
+            const matchesBbox =
+              Math.abs(ring[0][0] - w) < 0.05 && Math.abs(ring[0][1] - s) < 0.05 &&
+              Math.abs(ring[1][0] - e) < 0.05 && Math.abs(ring[1][1] - s) < 0.05 &&
+              Math.abs(ring[2][0] - e) < 0.05 && Math.abs(ring[2][1] - n) < 0.05 &&
+              Math.abs(ring[3][0] - w) < 0.05 && Math.abs(ring[3][1] - n) < 0.05;
+
+            if (matchesBbox) {
+              addError(
+                'Слои (GeoJSON)',
+                layer.id,
+                `Запрещённая bbox-заглушка в ${filePath}: обнаружен прямоугольник из 5 точек по координатам layer.bbox. Bbox-заглушки строго запрещены.`
+              );
+            }
+          }
+        }
       }
     } catch (err) {
       addError('Слои (GeoJSON)', layer.id, `Синтаксическая ошибка в GeoJSON ${filePath}: ${err.message}`);
     }
   } else {
-    // Если файла нет, слой обязан быть явно помечен как схематичный
-    if (!isMarkedSchematicInNote && !isMarkedSchematicField) {
+    // Если файла нет, слой обязан иметь явную пометку "approximate"
+    if (!isApproximate) {
       addError(
         'Слои (GeoJSON)',
         layer.id,
-        `Отсутствует файл GeoJSON (public/data/layers/${layer.id}.geojson) и нет явной пометки "схематично" в note`
+        `Слой без GeoJSON (public/data/layers/${layer.id}.geojson) и без пометки "approximate" — ошибка сборки`
       );
     }
   }
@@ -373,7 +413,38 @@ if (existsSync(portraitsDir)) {
 }
 
 // -------------------------------------------------------------
-// 7. Итоговый структурированный отчёт
+// 7. Проверка общего размера каталога public/data (< 25 МБ)
+// -------------------------------------------------------------
+const dataDir = join(root, 'public/data');
+function getDirSizeBytes(dir) {
+  let total = 0;
+  if (!existsSync(dir)) return 0;
+  const entries = readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      total += getDirSizeBytes(full);
+    } else if (entry.isFile()) {
+      total += statSync(full).size;
+    }
+  }
+  return total;
+}
+
+const dataSizeBytes = getDirSizeBytes(dataDir);
+const dataSizeMB = dataSizeBytes / (1024 * 1024);
+const MAX_DATA_MB = 25;
+
+if (dataSizeMB > MAX_DATA_MB) {
+  addError(
+    'Размер данных',
+    'public/data',
+    `Суммарный размер каталога public/data (${dataSizeMB.toFixed(2)} МБ) превышает допустимый лимит ${MAX_DATA_MB} МБ.`
+  );
+}
+
+// -------------------------------------------------------------
+// 8. Итоговый структурированный отчёт
 // -------------------------------------------------------------
 console.log(`\n${BOLD}=== ВАЛИДАЦИЯ ДАННЫХ ИСТОРИИ КЫРГЫЗСТАНА ===${RESET}`);
 console.log(`Проверено:`);
@@ -381,6 +452,7 @@ console.log(`  • Эпох (eras):       ${CYAN}${eras.length}${RESET}`);
 console.log(`  • Слоёв (layers):    ${CYAN}${layers.length}${RESET}`);
 console.log(`  • Событий (events):  ${CYAN}${events.length}${RESET}`);
 console.log(`  • Деятелей (rulers): ${CYAN}${rulers.length}${RESET}`);
+console.log(`  • Размер public/data:${CYAN} ${dataSizeMB.toFixed(2)} МБ${RESET} / ${MAX_DATA_MB} МБ`);
 console.log(`-----------------------------------------------`);
 
 if (warnings.length > 0) {

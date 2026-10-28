@@ -53,9 +53,34 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
   const activeEra = useMemo(() => eraForYear(year), [year]);
   const activeLayers = useMemo(() => layersForYear(year), [year]);
   const closestSnapshotYear = useMemo(() => getClosestSnapshotYear(year), [year]);
+  const [mapMounted, setMapMounted] = useState(false);
+  const [mapLoaded, setMapLoaded] = useState(false);
   const [legendOpen, setLegendOpen] = useState(
     () => (typeof window !== 'undefined' ? window.innerWidth >= 768 : true)
   );
+
+  // Отложенный монтаж WebGL MapLibre до освобождения основного потока (устраняет блокировку FCP/TBT)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const idleId = (
+        window as unknown as {
+          requestIdleCallback: (cb: () => void, opts?: { timeout: number }) => number;
+          cancelIdleCallback: (id: number) => void;
+        }
+      ).requestIdleCallback(() => setMapMounted(true), { timeout: 150 });
+
+      return () => {
+        if ('cancelIdleCallback' in window) {
+          (
+            window as unknown as { cancelIdleCallback: (id: number) => void }
+          ).cancelIdleCallback(idleId);
+        }
+      };
+    } else {
+      const timer = setTimeout(() => setMapMounted(true), 30);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   // Синхронизация видимости современных границ
   const applyBorderVisibility = useCallback(
@@ -141,7 +166,8 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
       className={`relative w-full h-full overflow-hidden bg-[#F6F1E7] ${className ?? ''}`}
       style={{ backgroundColor: '#F6F1E7' }}
     >
-      <Map
+      {mapMounted && (
+        <Map
         ref={mapRef}
         mapLib={maplibregl}
         initialViewState={KYRGYZSTAN_CENTER}
@@ -180,6 +206,7 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
         }}
         onLoad={() => {
           isLoadedRef.current = true;
+          setMapLoaded(true);
           applyBorderVisibility(showModernBorders);
           if (mapRef.current && onMapLoad) {
             onMapLoad(mapRef.current);
@@ -199,11 +226,13 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
           }}
         />
 
-        {/* Фоновый контекст соседних государств (historical-basemaps) */}
-        <NeighborsLayer />
-
-        {/* Слои исторических территорий текущего года */}
-        <TerritoryLayers />
+        {/* Фоновый контекст соседних государств и слои территорий (подключаются после инициализации карты) */}
+        {mapLoaded && (
+          <>
+            <NeighborsLayer />
+            <TerritoryLayers />
+          </>
+        )}
 
         {/* Маркеры событий на карте */}
         {activeEvents.map((ev) => {
@@ -284,6 +313,7 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
           );
         })}
       </Map>
+      )}
 
       {/* Панель переключателей карты и легенда (historical-basemaps) */}
       <div className="absolute top-28 md:top-16 left-3 md:left-[21.5rem] z-10 flex flex-col gap-1.5 pointer-events-auto">
@@ -292,11 +322,11 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
           <button
             onClick={toggleNeighbors}
             aria-pressed={showNeighbors}
-            aria-label="Переключить отображение соседних государств"
-            className={`cursor-pointer min-h-[38px] px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border transition-all flex items-center gap-1.5 backdrop-blur-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
+            aria-label="Соседи: переключить отображение соседних государств"
+            className={`cursor-pointer min-h-[38px] px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border transition-all flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
               showNeighbors
                 ? 'bg-[#2B2A28] text-white border-black'
-                : 'bg-white/95 text-[#4A463F] border-black/10 hover:bg-white hover:text-[#2B2A28]'
+                : 'bg-[#FDFBF7] text-[#4A463F] border-black/10 hover:bg-white hover:text-[#2B2A28]'
             }`}
           >
             <span>🗺️ Соседи</span>
@@ -313,11 +343,11 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
           <button
             onClick={toggleModernBorders}
             aria-pressed={showModernBorders}
-            aria-label="Переключить современные государственные границы"
-            className={`cursor-pointer min-h-[38px] px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border transition-all flex items-center gap-1.5 backdrop-blur-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
+            aria-label="Границы: переключить современные государственные границы"
+            className={`cursor-pointer min-h-[38px] px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border transition-all flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
               showModernBorders
                 ? 'bg-[#2B2A28] text-white border-black'
-                : 'bg-white/95 text-[#4A463F] border-black/10 hover:bg-white hover:text-[#2B2A28]'
+                : 'bg-[#FDFBF7] text-[#4A463F] border-black/10 hover:bg-white hover:text-[#2B2A28]'
             }`}
           >
             <span>🌐 Границы</span>
@@ -333,8 +363,8 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
           {/* Кнопка сворачивания/разворачивания легенды */}
           <button
             onClick={() => setLegendOpen((v) => !v)}
-            aria-label={legendOpen ? 'Свернуть легенду карты' : 'Развернуть легенду карты'}
-            className="cursor-pointer min-h-[38px] px-2.5 py-1.5 rounded-full text-xs text-[#4A463F] bg-white/90 hover:bg-white border border-black/10 shadow-sm backdrop-blur-md transition-all flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28]"
+            aria-label={legendOpen ? 'Легенда: свернуть легенду карты' : 'Легенда: развернуть легенду карты'}
+            className="cursor-pointer min-h-[38px] px-2.5 py-1.5 rounded-full text-xs text-[#4A463F] bg-[#FDFBF7] hover:bg-white border border-black/10 shadow-sm transition-all flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28]"
           >
             <span className="text-[11px]">{legendOpen ? '▲ Свернуть' : '▼ Легенда'}</span>
           </button>

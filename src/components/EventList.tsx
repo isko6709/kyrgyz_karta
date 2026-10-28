@@ -1,5 +1,5 @@
 import { useMemo, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { m, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { events, eraForYear, layers } from '../lib/data';
 import { useStore } from '../store';
 import { EventCard, CATEGORY_CONFIG, CERTAINTY_CONFIG } from './EventCard';
@@ -123,7 +123,7 @@ export function EventList() {
         className="hidden md:flex absolute right-4 top-14 bottom-32 w-80 md:w-96 z-10 flex-col pointer-events-none"
         aria-label="Хроника исторических событий"
       >
-        <div className="pointer-events-auto flex-1 flex flex-col bg-white/95 backdrop-blur-md rounded-[16px] shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-black/5 p-4 overflow-hidden">
+        <div className="pointer-events-auto flex-1 flex flex-col bg-[#FDFBF7] rounded-[16px] shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-black/5 p-4 overflow-hidden">
           {/* Шапка колонки */}
           <header className="flex items-center justify-between border-b border-black/10 pb-3">
             <div>
@@ -185,7 +185,7 @@ export function EventList() {
             aria-labelledby="mobile-sheet-title"
           >
             {/* Затемняющий оверлей для закрытия по тапу вне карточки */}
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -199,7 +199,7 @@ export function EventList() {
             />
 
             {/* Панель Bottom Sheet */}
-            <motion.div
+            <m.div
               ref={mobileSheetRef}
               initial={{ y: shouldReduceMotion ? 0 : '100%' }}
               animate={{ y: 0 }}
@@ -411,7 +411,7 @@ export function EventList() {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           </div>
         )}
       </AnimatePresence>

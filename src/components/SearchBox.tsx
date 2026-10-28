@@ -106,7 +106,7 @@ export function SearchBox() {
             }
           }}
           placeholder="Поиск событий, ханов и деятелей..."
-          className="w-full pl-8 pr-8 py-1.5 min-h-[38px] sm:min-h-[36px] rounded-full bg-white/95 backdrop-blur-md border border-black/15 shadow-sm text-xs text-[#1F1E1D] placeholder-[#4A463F] focus:outline-none focus:ring-2 focus:ring-[#2C6466]/40 focus:border-[#2C6466]"
+          className="w-full pl-8 pr-8 py-1.5 min-h-[38px] sm:min-h-[36px] rounded-full bg-[#FDFBF7] border border-black/15 shadow-sm text-xs text-[#1F1E1D] placeholder-[#4A463F] focus:outline-none focus:ring-2 focus:ring-[#2C6466]/40 focus:border-[#2C6466]"
         />
         {search && (
           <button
@@ -129,7 +129,7 @@ export function SearchBox() {
           id="search-results-list"
           role="listbox"
           aria-label="Результаты поиска"
-          className="absolute top-full mt-1.5 left-0 right-0 max-h-96 overflow-y-auto bg-white/98 backdrop-blur-md rounded-[16px] shadow-[0_12px_36px_rgba(0,0,0,0.15)] border border-black/10 p-2 z-50"
+          className="absolute top-full mt-1.5 left-0 right-0 max-h-96 overflow-y-auto bg-[#FDFBF7] rounded-[16px] shadow-[0_12px_36px_rgba(0,0,0,0.15)] border border-black/10 p-2 z-50"
         >
           {!hasResults ? (
             <div className="py-6 text-center text-xs text-[#4A463F]">

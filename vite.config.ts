@@ -16,6 +16,9 @@ export default defineConfig({
           if (id.includes('framer-motion')) {
             return 'motion';
           }
+          if (id.includes('about.json')) {
+            return 'about-data';
+          }
         },
       },
     },

@@ -26,3 +26,7 @@ dist-ssr
 tmp-portraits/
 kyrgyz-history-starter/
 .cache/
+lighthouse*.json
+
+.vercel
+.env*
