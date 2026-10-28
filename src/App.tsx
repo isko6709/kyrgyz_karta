@@ -7,6 +7,7 @@ import { EventList } from './components/EventList';
 import { EraChips } from './components/EraChips';
 import { SearchBox } from './components/SearchBox';
 import { LayersDebugModal } from './components/LayersDebugModal';
+import { AboutModal } from './components/AboutModal';
 import { useHashSync } from './hooks/useHashSync';
 import { usePlayback } from './hooks/usePlayback';
 import { useStore } from './store';
@@ -16,6 +17,8 @@ export default function App() {
     year,
     showModernBorders,
     toggleModernBorders,
+    showAboutModal,
+    setShowAboutModal,
   } = useStore();
 
   const isDebugAllowed =
@@ -32,24 +35,32 @@ export default function App() {
     );
   });
 
-  // Отслеживание изменений query params или hash для debug=layers
+  // Отслеживание изменений query params или hash для debug=layers и ?about
   useEffect(() => {
-    const checkDebugParam = () => {
+    const checkUrlParams = () => {
       const isDebug =
         window.location.search.includes('debug=layers') ||
         window.location.hash.includes('debug=layers');
       if (isDebug && isDebugAllowed) {
         setShowDebugLayers(true);
       }
+
+      const isAbout =
+        window.location.search.includes('about') ||
+        window.location.hash.includes('about');
+      if (isAbout) {
+        setShowAboutModal(true);
+      }
     };
 
-    window.addEventListener('popstate', checkDebugParam);
-    window.addEventListener('hashchange', checkDebugParam);
+    checkUrlParams();
+    window.addEventListener('popstate', checkUrlParams);
+    window.addEventListener('hashchange', checkUrlParams);
     return () => {
-      window.removeEventListener('popstate', checkDebugParam);
-      window.removeEventListener('hashchange', checkDebugParam);
+      window.removeEventListener('popstate', checkUrlParams);
+      window.removeEventListener('hashchange', checkUrlParams);
     };
-  }, [isDebugAllowed]);
+  }, [isDebugAllowed, setShowAboutModal]);
 
   // Синхронизация URL хэш-ссылок (#event=ID, #year=YYYY)
   useHashSync();
@@ -72,13 +83,15 @@ export default function App() {
           <SearchBox />
 
           <div className="bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.06)] border border-black/5 text-xs text-[#6B665E] flex items-center gap-2.5">
-            <span
-              className="text-[11px] text-[#6B665E]"
-              title="Историческое примечание: границы государств и племенных союзов приведены схематично, а даты до XIX века в источниках приблизительны"
+            <button
+              onClick={() => setShowAboutModal(true)}
+              className="cursor-pointer text-[11px] text-[#6B665E] hover:text-[#2B2A28] transition-colors flex items-center gap-1 focus:outline-none"
+              title="Нажмите, чтобы прочитать о проекте, источниках, лицензиях и точности дат"
             >
               <span className="hidden md:inline">Границы схематичны. Даты до XIX века приблизительны</span>
               <span className="md:hidden">Границы схематичны</span>
-            </span>
+              <span className="text-[10px] opacity-60">ℹ️</span>
+            </button>
             {activeEra && (
               <span
                 className="px-2 py-0.5 rounded-full text-white text-[10.5px] font-medium"
@@ -97,6 +110,14 @@ export default function App() {
               title="Переключить отображение современных государственных границ"
             >
               Границы: {showModernBorders ? 'Вкл' : 'Выкл'}
+            </button>
+            <button
+              onClick={() => setShowAboutModal(true)}
+              className="cursor-pointer px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all border bg-black/5 text-[#5E5951] hover:bg-black/10 hover:text-[#2B2A28] border-black/10 flex items-center gap-1 shadow-xs"
+              title="О проекте, источниках, лицензиях и авторах фото"
+            >
+              <span>ℹ️</span>
+              <span className="hidden sm:inline">О проекте</span>
             </button>
             {isDebugAllowed && (
               <button
@@ -134,6 +155,28 @@ export default function App() {
               const url = new URL(window.location.href);
               url.searchParams.delete('debug');
               window.history.replaceState(null, '', url.pathname + url.hash);
+            }
+          }}
+        />
+      )}
+
+      {/* 6. МОДАЛЬНОЕ ОКНО «О ПРОЕКТЕ» (?about / #about) */}
+      {showAboutModal && (
+        <AboutModal
+          onClose={() => {
+            setShowAboutModal(false);
+            if (
+              window.location.search.includes('about') ||
+              window.location.hash.includes('about')
+            ) {
+              const url = new URL(window.location.href);
+              url.searchParams.delete('about');
+              const cleanHash = url.hash.replace(/[#&?]about(=true)?/g, '');
+              window.history.replaceState(
+                null,
+                '',
+                url.pathname + (url.search ? url.search : '') + (cleanHash !== '#' ? cleanHash : '')
+              );
             }
           }}
         />

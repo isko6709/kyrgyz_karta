@@ -48,6 +48,7 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
     highlightedLayerId,
     setHighlightedLayerId,
     targetFlyTo,
+    setShowAboutModal,
   } = useStore();
   const activeEra = useMemo(() => eraForYear(year), [year]);
   const activeLayers = useMemo(() => layersForYear(year), [year]);
@@ -380,15 +381,26 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
             )}
 
             {/* Обязательная атрибуция по условиям лицензии */}
-            <div className="text-[9.5px] leading-tight text-[#6B665E] pt-1.5 border-t border-black/10">
-              Границы схематичны, источник: <a
-                href="https://github.com/aourednik/historical-basemaps"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:text-[#2B2A28] font-medium"
+            <div className="text-[9.5px] leading-tight text-[#6B665E] pt-1.5 border-t border-black/10 flex items-center justify-between gap-1 flex-wrap">
+              <div>
+                Границы схематичны, источник:{' '}
+                <a
+                  href="https://github.com/aourednik/historical-basemaps"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-[#2B2A28] font-medium"
+                >
+                  historical-basemaps
+                </a>{' '}
+                · <span className="text-[#8C8275]">GNU GPLv3</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAboutModal(true)}
+                className="cursor-pointer text-[9.5px] text-[#2C6466] hover:underline font-semibold shrink-0"
               >
-                historical-basemaps
-              </a> (A. Ourednik и др.) · <span className="text-[#8C8275]">Лицензия GNU GPLv3</span>.
+                О проекте →
+              </button>
             </div>
           </div>
         )}

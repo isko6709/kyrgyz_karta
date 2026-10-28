@@ -20,6 +20,7 @@ export interface AppState {
   debugMode: boolean;
   debugSelectedLayerId: string | null;
   debugForcedLayerIds: string[];
+  showAboutModal: boolean;
 
   setYear: (year: number) => void;
   selectEvent: (id: number | null) => void;
@@ -36,6 +37,7 @@ export interface AppState {
   setDebugSelectedLayerId: (id: string | null) => void;
   toggleDebugForcedLayer: (id: string) => void;
   setDebugForcedLayers: (ids: string[]) => void;
+  setShowAboutModal: (show: boolean) => void;
   flyTo: (center: [number, number], zoom?: number, duration?: number) => void;
 }
 
@@ -58,6 +60,10 @@ export const useStore = create<AppState>((set) => ({
       window.location.hash.includes('debug=layers')),
   debugSelectedLayerId: null,
   debugForcedLayerIds: [],
+  showAboutModal:
+    typeof window !== 'undefined' &&
+    (window.location.search.includes('about') ||
+      window.location.hash.includes('about')),
 
   setYear: (year: number) => {
     const era = eraForYear(year);
@@ -128,6 +134,7 @@ export const useStore = create<AppState>((set) => ({
     })),
   setDebugForcedLayers: (debugForcedLayerIds: string[]) =>
     set({ debugForcedLayerIds }),
+  setShowAboutModal: (showAboutModal: boolean) => set({ showAboutModal }),
   flyTo: (center: [number, number], zoom = 7, duration = 1400) =>
     set({ targetFlyTo: { center, zoom, duration } }),
 }));
