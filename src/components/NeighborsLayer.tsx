@@ -103,8 +103,9 @@ export function NeighborsLayer() {
 
     const handleMouseMove = (e: MapLayerMouseEvent) => {
       // 1. Если курсор над фокусным слоем кыргызских земель, не показываем соседа
-      if (map.getLayer('territories-fill')) {
-        const terrFeatures = map.queryRenderedFeatures(e.point, { layers: ['territories-fill'] });
+      const terrLayers = ['territories-fill', 'territories-labels'].filter((id) => Boolean(map.getLayer(id)));
+      if (terrLayers.length > 0) {
+        const terrFeatures = map.queryRenderedFeatures(e.point, { layers: terrLayers });
         if (terrFeatures.length > 0) {
           map.getCanvas().style.cursor = 'pointer';
           setHoveredNeighbor(null);
@@ -147,8 +148,9 @@ export function NeighborsLayer() {
 
     const handleMapClick = (e: MapLayerMouseEvent) => {
       // Проверяем клик по фокусным территориям
-      if (map.getLayer('territories-fill')) {
-        const terrFeatures = map.queryRenderedFeatures(e.point, { layers: ['territories-fill'] });
+      const terrLayers = ['territories-fill', 'territories-labels'].filter((id) => Boolean(map.getLayer(id)));
+      if (terrLayers.length > 0) {
+        const terrFeatures = map.queryRenderedFeatures(e.point, { layers: terrLayers });
         if (terrFeatures.length > 0) {
           setClickedNeighbor(null);
           return;
@@ -227,21 +229,37 @@ export function NeighborsLayer() {
         <Layer
           id="context-a-labels"
           type="symbol"
-          maxzoom={6}
+          maxzoom={7}
           layout={{
             'text-field': ['get', 'NAME'],
             'text-font': ['Noto Sans Regular'],
-            'text-size': 10,
+            'text-size': [
+              'step',
+              ['zoom'],
+              // При zoom < 4 — только крупные государства (area >= 70)
+              ['case', ['get', 'is_major'], 10, 0],
+              // При zoom 4..5 — средние и крупные государства (area >= 12)
+              4,
+              ['case', ['>=', ['coalesce', ['get', 'area'], 0], 12], 10, 0],
+              // При zoom >= 5 — все государства
+              5,
+              9.5,
+            ],
             'text-transform': 'uppercase',
             'text-letter-spacing': 0.08,
-            'text-max-width': 8,
+            'text-max-width': 10,
+            'text-padding': 5,
+            'symbol-avoid-edges': true,
             'text-allow-overlap': false,
+            'text-ignore-placement': false,
+            'symbol-sort-key': ['coalesce', ['get', 'sort_key'], 10000000],
           }}
           paint={{
             'text-color': '#5E5951',
-            'text-halo-color': 'rgba(255, 255, 255, 0.85)',
-            'text-halo-width': 1.2,
-            'text-opacity': isA ? 0.75 : 0,
+            'text-halo-color': 'rgba(255, 255, 255, 0.95)',
+            'text-halo-width': 2.2,
+            'text-halo-blur': 1.0,
+            'text-opacity': isA ? 0.8 : 0,
             'text-opacity-transition': { duration: 500, delay: 0 },
           }}
         />
@@ -271,21 +289,37 @@ export function NeighborsLayer() {
         <Layer
           id="context-b-labels"
           type="symbol"
-          maxzoom={6}
+          maxzoom={7}
           layout={{
             'text-field': ['get', 'NAME'],
             'text-font': ['Noto Sans Regular'],
-            'text-size': 10,
+            'text-size': [
+              'step',
+              ['zoom'],
+              // При zoom < 4 — только крупные государства (area >= 70)
+              ['case', ['get', 'is_major'], 10, 0],
+              // При zoom 4..5 — средние и крупные государства (area >= 12)
+              4,
+              ['case', ['>=', ['coalesce', ['get', 'area'], 0], 12], 10, 0],
+              // При zoom >= 5 — все государства
+              5,
+              9.5,
+            ],
             'text-transform': 'uppercase',
             'text-letter-spacing': 0.08,
-            'text-max-width': 8,
+            'text-max-width': 10,
+            'text-padding': 5,
+            'symbol-avoid-edges': true,
             'text-allow-overlap': false,
+            'text-ignore-placement': false,
+            'symbol-sort-key': ['coalesce', ['get', 'sort_key'], 10000000],
           }}
           paint={{
             'text-color': '#5E5951',
-            'text-halo-color': 'rgba(255, 255, 255, 0.85)',
-            'text-halo-width': 1.2,
-            'text-opacity': isB ? 0.75 : 0,
+            'text-halo-color': 'rgba(255, 255, 255, 0.95)',
+            'text-halo-width': 2.2,
+            'text-halo-blur': 1.0,
+            'text-opacity': isB ? 0.8 : 0,
             'text-opacity-transition': { duration: 500, delay: 0 },
           }}
         />

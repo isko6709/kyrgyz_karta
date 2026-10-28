@@ -154,9 +154,12 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
           const map = mapRef.current?.getMap();
           if (!map) return;
 
-          // 1. Проверяем клик по фокусным слоям территорий
-          if (map.getLayer('territories-fill')) {
-            const terr = map.queryRenderedFeatures(e.point, { layers: ['territories-fill'] });
+          // 1. Проверяем клик по фокусным слоям территорий (заливка или подпись)
+          const activeTerrLayers = ['territories-fill', 'territories-labels'].filter((id) =>
+            Boolean(map.getLayer(id))
+          );
+          if (activeTerrLayers.length > 0) {
+            const terr = map.queryRenderedFeatures(e.point, { layers: activeTerrLayers });
             if (terr.length > 0) {
               const clickedId = terr[0].properties?.id as string | undefined;
               if (clickedId) {

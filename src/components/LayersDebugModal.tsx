@@ -324,6 +324,11 @@ export function LayersDebugModal({ onClose }: { onClose: () => void }) {
                     {/* Название и эпоха */}
                     <td className="py-2 px-3">
                       <div className="font-semibold text-[#2B2A28]">{layer.title}</div>
+                      {layer.shortTitle && layer.shortTitle !== layer.title && (
+                        <div className="text-[10px] text-[#2C6466] font-medium mt-0.5">
+                          На карте: «{layer.shortTitle}»
+                        </div>
+                      )}
                       <div className="text-[10.5px] text-[#5E5951] flex items-center gap-1.5 mt-0.5">
                         <span>
                           {layer.from < 0 ? `${Math.abs(layer.from)} до н.э.` : layer.from}–

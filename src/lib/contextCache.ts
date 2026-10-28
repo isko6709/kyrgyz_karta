@@ -12,6 +12,37 @@ const cache: Record<number, FeatureCollection | null> = {};
 const pendingRequests: Record<number, Promise<FeatureCollection | null>> = {};
 
 /**
+ * Вычисляет приближенную площадь замкнутого кольца координат
+ */
+function computeRingArea(coords: [number, number][]): number {
+  let area = 0;
+  for (let i = 0; i < coords.length - 1; i++) {
+    const p1 = coords[i];
+    const p2 = coords[i + 1];
+    area += (p2[0] - p1[0]) * (p1[1] + p2[1]);
+  }
+  return Math.abs(area) / 2;
+}
+
+/**
+ * Вычисляет площадь геометрии в квадратных градусах
+ */
+export function computeGeometryArea(geometry: unknown): number {
+  if (!geometry || typeof geometry !== 'object') return 0;
+  const g = geometry as { type?: string; coordinates?: unknown };
+  if (g.type === 'Polygon' && Array.isArray(g.coordinates) && Array.isArray(g.coordinates[0])) {
+    return computeRingArea(g.coordinates[0] as [number, number][]);
+  }
+  if (g.type === 'MultiPolygon' && Array.isArray(g.coordinates)) {
+    return (g.coordinates as [number, number][][][]).reduce(
+      (sum: number, poly) => sum + (Array.isArray(poly) && Array.isArray(poly[0]) ? computeRingArea(poly[0]) : 0),
+      0
+    );
+  }
+  return 0;
+}
+
+/**
  * Находит ближайший год контекстного снимка для заданного года хронологии
  */
 export function getClosestSnapshotYear(year: number): number {
@@ -49,6 +80,17 @@ export async function loadContextGeoJson(snapshotYear: number): Promise<FeatureC
         throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       }
       const data = (await res.json()) as FeatureCollection;
+      if (data && Array.isArray(data.features)) {
+        for (const feat of data.features) {
+          if (!feat.properties) feat.properties = {};
+          const area = Math.round(computeGeometryArea(feat.geometry) * 10) / 10;
+          feat.properties.area = area;
+          // Чем больше площадь, тем меньше sort_key (наивысший приоритет размещения в MapLibre)
+          feat.properties.sort_key = 10000000 - Math.min(10000000, Math.round(area * 100));
+          // Крупными государствами для zoom < 4 считаем полигоны с площадью >= 70 кв. градусов
+          feat.properties.is_major = area >= 70;
+        }
+      }
       cache[snapshotYear] = data;
       return data;
     })

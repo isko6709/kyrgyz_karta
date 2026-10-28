@@ -3,7 +3,11 @@ export type LatLng = [number, number]; // [lat, lng]. Для MapLibre перев
 export interface Era { id: string; title: string; from: number; to: number; color: string }
 
 export interface Layer {
-  id: string; title: string; from: number; to: number;
+  id: string;
+  title: string;
+  shortTitle?: string;
+  from: number;
+  to: number;
   bbox: [number, number, number, number]; // [west, south, east, north] — заглушка до появления GeoJSON
   note?: string;
 }

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { rulersForYear, layersForYear } from '../lib/data';
+import { rulersForYear, layersForYear, layers } from '../lib/data';
 import { useStore } from '../store';
 import { RulerAvatar } from './RulerAvatar';
 import type { Ruler } from '../types';
@@ -135,6 +135,7 @@ export function RulerColumn() {
                     const isLayerActive =
                       ruler.layer !== null && ruler.layer === highlightedLayerId;
                     const isCulture = ruler.figureType === 'culture';
+                    const linkedLayer = ruler.layer ? layers.find((l) => l.id === ruler.layer) : null;
 
                     return (
                       <motion.button
@@ -146,16 +147,16 @@ export function RulerColumn() {
                         transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
                         onClick={() => handleRulerClick(ruler)}
                         aria-pressed={isLayerActive}
-                        aria-label={`${isCulture ? 'Деятель культуры' : 'Правитель'} ${ruler.name}, ${ruler.display}. ${ruler.layer ? 'Нажмите для подсветки территории.' : ''}`}
+                        aria-label={`${isCulture ? 'Деятель культуры' : 'Правитель'} ${ruler.name}, ${ruler.display}.${linkedLayer ? ` Государство: ${linkedLayer.title}. Нажмите для подсветки территории.` : ''}`}
                         className={`cursor-pointer w-full p-2 rounded-xl transition-all flex flex-col items-center border text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
                           isLayerActive
                             ? 'bg-white border-[#2C6466] ring-2 ring-[#2C6466]/30 shadow-md scale-102'
                             : 'bg-[#FDFBF7]/60 border-black/5 hover:bg-white hover:border-black/15 hover:shadow-sm'
                         }`}
                         title={
-                          ruler.layer
-                            ? `Кликните, чтобы подсветить территорию: ${ruler.name}`
-                            : ruler.name
+                          linkedLayer
+                            ? `${ruler.name} (${ruler.display})\nГосударство: ${linkedLayer.title}\nНажмите для подсветки территории`
+                            : `${ruler.name} (${ruler.display})`
                         }
                       >
                         {/* Аватарка через штатный компонент (внутри getPortrait) */}
