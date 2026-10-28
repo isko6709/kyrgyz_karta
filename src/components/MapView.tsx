@@ -53,7 +53,9 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
   const activeEra = useMemo(() => eraForYear(year), [year]);
   const activeLayers = useMemo(() => layersForYear(year), [year]);
   const closestSnapshotYear = useMemo(() => getClosestSnapshotYear(year), [year]);
-  const [legendOpen, setLegendOpen] = useState(true);
+  const [legendOpen, setLegendOpen] = useState(
+    () => (typeof window !== 'undefined' ? window.innerWidth >= 768 : true)
+  );
 
   // Синхронизация видимости современных границ
   const applyBorderVisibility = useCallback(
@@ -284,23 +286,23 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
       </Map>
 
       {/* Панель переключателей карты и легенда (historical-basemaps) */}
-      <div className="absolute top-16 left-4 md:left-[21.5rem] z-10 flex flex-col gap-1.5 pointer-events-auto">
+      <div className="absolute top-28 md:top-16 left-3 md:left-[21.5rem] z-10 flex flex-col gap-1.5 pointer-events-auto">
         <div className="flex items-center gap-1.5 flex-wrap">
           {/* Переключатель «Соседи» (по умолчанию включён) */}
           <button
             onClick={toggleNeighbors}
             aria-pressed={showNeighbors}
             aria-label="Переключить отображение соседних государств"
-            className={`cursor-pointer px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border transition-all flex items-center gap-1.5 backdrop-blur-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
+            className={`cursor-pointer min-h-[38px] px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border transition-all flex items-center gap-1.5 backdrop-blur-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
               showNeighbors
                 ? 'bg-[#2B2A28] text-white border-black'
-                : 'bg-white/95 text-[#5E5951] border-black/10 hover:bg-white hover:text-[#2B2A28]'
+                : 'bg-white/95 text-[#4A463F] border-black/10 hover:bg-white hover:text-[#2B2A28]'
             }`}
           >
             <span>🗺️ Соседи</span>
             <span
               className={`text-[9.5px] px-1.5 py-0.5 rounded font-mono ${
-                showNeighbors ? 'bg-white/20 text-white' : 'bg-black/5 text-[#5E5951]'
+                showNeighbors ? 'bg-white/20 text-white' : 'bg-black/5 text-[#4A463F]'
               }`}
             >
               {showNeighbors ? 'Вкл' : 'Выкл'}
@@ -312,16 +314,16 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
             onClick={toggleModernBorders}
             aria-pressed={showModernBorders}
             aria-label="Переключить современные государственные границы"
-            className={`cursor-pointer px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border transition-all flex items-center gap-1.5 backdrop-blur-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
+            className={`cursor-pointer min-h-[38px] px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border transition-all flex items-center gap-1.5 backdrop-blur-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
               showModernBorders
                 ? 'bg-[#2B2A28] text-white border-black'
-                : 'bg-white/95 text-[#5E5951] border-black/10 hover:bg-white hover:text-[#2B2A28]'
+                : 'bg-white/95 text-[#4A463F] border-black/10 hover:bg-white hover:text-[#2B2A28]'
             }`}
           >
             <span>🌐 Границы</span>
             <span
               className={`text-[9.5px] px-1.5 py-0.5 rounded font-mono ${
-                showModernBorders ? 'bg-white/20 text-white' : 'bg-black/5 text-[#5E5951]'
+                showModernBorders ? 'bg-white/20 text-white' : 'bg-black/5 text-[#4A463F]'
               }`}
             >
               {showModernBorders ? 'Вкл' : 'Выкл'}
@@ -332,15 +334,15 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
           <button
             onClick={() => setLegendOpen((v) => !v)}
             aria-label={legendOpen ? 'Свернуть легенду карты' : 'Развернуть легенду карты'}
-            className="cursor-pointer px-2 py-1.5 rounded-full text-xs text-[#5E5951] bg-white/90 hover:bg-white border border-black/10 shadow-sm backdrop-blur-md transition-all flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28]"
+            className="cursor-pointer min-h-[38px] px-2.5 py-1.5 rounded-full text-xs text-[#4A463F] bg-white/90 hover:bg-white border border-black/10 shadow-sm backdrop-blur-md transition-all flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28]"
           >
-            <span className="text-[11px]">{legendOpen ? '▲' : '▼ Легенда'}</span>
+            <span className="text-[11px]">{legendOpen ? '▲ Свернуть' : '▼ Легенда'}</span>
           </button>
         </div>
 
         {/* Информационная легенда и атрибуция (historical-basemaps) */}
         {legendOpen && (
-          <div className="px-3 py-2 rounded-xl bg-white/95 backdrop-blur-md shadow-md border border-black/10 text-[11px] text-[#5E5951] max-w-xs space-y-1.5 animate-fadeIn">
+          <div className="px-3 py-2 rounded-xl bg-white/95 backdrop-blur-md shadow-md border border-black/10 text-[11px] text-[#4A463F] max-w-xs space-y-1.5 animate-fadeIn">
             {/* Фокусное государство */}
             <div className="flex items-start gap-2">
               <span
@@ -348,13 +350,13 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
                 style={{ backgroundColor: activeEra?.color ?? '#4F8A8B', opacity: 0.85 }}
               />
               <div className="leading-snug">
-                <span className="font-bold text-[#2B2A28] block">
+                <span className="font-bold text-[#1F1E1D] block">
                   Фокус: кыргызские земли
                 </span>
-                <span className="text-[10px] text-[#6B665E]">
+                <span className="text-[10px] text-[#5E5951]">
                   Эпоха: {activeEra?.title ?? '—'} (прозрачность ~0.45)
                   {activeLayers.length > 1 && (
-                    <span className="block text-[9.5px] text-[#8C8275] italic">
+                    <span className="block text-[9.5px] text-[#5E5951] italic">
                       ({activeLayers.length} активных слоя, выделены отдельными контурами)
                     </span>
                   )}
@@ -365,15 +367,15 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
             {/* Соседние государства */}
             {showNeighbors && (
               <div className="flex items-start gap-2 pt-1 border-t border-black/5">
-                <span className="w-3.5 h-3.5 rounded shrink-0 border border-[#8C8275] bg-[#D4E2D4] opacity-80 shadow-sm mt-0.5" />
+                <span className="w-3.5 h-3.5 rounded shrink-0 border border-[#5E5951] bg-[#D4E2D4] opacity-80 shadow-sm mt-0.5" />
                 <div className="leading-snug">
-                  <span className="font-semibold text-[#2B2A28] block">
+                  <span className="font-semibold text-[#1F1E1D] block">
                     Соседние государства
                   </span>
-                  <span className="text-[10px] text-[#6B665E] block">
+                  <span className="text-[10px] text-[#5E5951] block">
                     Пастель (~0.18), снимок ~{closestSnapshotYear > 0 ? `${closestSnapshotYear} г.` : `${Math.abs(closestSnapshotYear)} г. до н.э.`}
                   </span>
-                  <span className="text-[9.5px] text-[#8C8275] italic block">
+                  <span className="text-[9.5px] text-[#5E5951] italic block">
                     Наведение или клик показывает название
                   </span>
                 </div>
@@ -381,18 +383,18 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
             )}
 
             {/* Обязательная атрибуция по условиям лицензии */}
-            <div className="text-[9.5px] leading-tight text-[#6B665E] pt-1.5 border-t border-black/10 flex items-center justify-between gap-1 flex-wrap">
+            <div className="text-[9.5px] leading-tight text-[#5E5951] pt-1.5 border-t border-black/10 flex items-center justify-between gap-1 flex-wrap">
               <div>
                 Границы схематичны, источник:{' '}
                 <a
                   href="https://github.com/aourednik/historical-basemaps"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="underline hover:text-[#2B2A28] font-medium"
+                  className="underline hover:text-[#1F1E1D] font-medium"
                 >
                   historical-basemaps
                 </a>{' '}
-                · <span className="text-[#8C8275]">GNU GPLv3</span>
+                · <span className="text-[#5E5951] font-mono">GNU GPLv3</span>
               </div>
               <button
                 type="button"

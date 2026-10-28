@@ -17,6 +17,7 @@ export interface AppState {
   showNeighbors: boolean;
   highlightedLayerId: string | null;
   targetFlyTo: FlyToOptions | null;
+  mobileSheetOpen: boolean;
   debugMode: boolean;
   debugSelectedLayerId: string | null;
   debugForcedLayerIds: string[];
@@ -24,6 +25,7 @@ export interface AppState {
 
   setYear: (year: number) => void;
   selectEvent: (id: number | null) => void;
+  setMobileSheetOpen: (open: boolean) => void;
   togglePlay: () => void;
   setPlaying: (playing: boolean) => void;
   setSearch: (search: string) => void;
@@ -54,6 +56,7 @@ export const useStore = create<AppState>((set) => ({
   showNeighbors: true,
   highlightedLayerId: null,
   targetFlyTo: null,
+  mobileSheetOpen: false,
   debugMode:
     typeof window !== 'undefined' &&
     (window.location.search.includes('debug=layers') ||
@@ -93,7 +96,7 @@ export const useStore = create<AppState>((set) => ({
 
   selectEvent: (id: number | null) => {
     if (id === null) {
-      set({ selectedEventId: null });
+      set({ selectedEventId: null, mobileSheetOpen: false });
       return;
     }
     const event = events.find((e) => e.id === id);
@@ -101,13 +104,16 @@ export const useStore = create<AppState>((set) => ({
       const era = eraForYear(event.year);
       set({
         selectedEventId: id,
+        mobileSheetOpen: true,
         year: event.year,
         activeEraId: event.era || (era ? era.id : 'turkic'),
       });
     } else {
-      set({ selectedEventId: id });
+      set({ selectedEventId: id, mobileSheetOpen: true });
     }
   },
+
+  setMobileSheetOpen: (mobileSheetOpen: boolean) => set({ mobileSheetOpen }),
 
   togglePlay: () => set((state) => ({ playing: !state.playing })),
   setPlaying: (playing: boolean) => set({ playing }),

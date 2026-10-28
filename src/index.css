@@ -94,3 +94,8 @@ body {
     margin: 0 !important;
   }
 }
+
+.maplibregl-ctrl-group button {
+  min-width: 36px !important;
+  min-height: 36px !important;
+}

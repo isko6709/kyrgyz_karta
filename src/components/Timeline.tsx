@@ -148,36 +148,37 @@ export function Timeline() {
       {/* Левая группа: Play, Текущий год и кнопки шага (адаптировано под тач) */}
       <div className="flex items-center justify-between md:justify-start gap-2 sm:gap-3.5 shrink-0 pt-1 md:pt-0">
         <div className="flex items-center gap-2">
-          {/* Кнопка Play с увеличенной зоной касания */}
+          {/* Кнопка Play с зоной касания не менее 44x44px */}
           <button
             onClick={togglePlay}
-            className={`cursor-pointer min-h-[38px] px-3 py-1.5 text-xs rounded-xl font-semibold flex items-center gap-1.5 transition-all shadow-sm active:scale-95 ${
+            className={`cursor-pointer min-h-[44px] min-w-[44px] px-3.5 py-2 text-xs rounded-xl font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
               playing
                 ? 'bg-amber-600 text-white hover:bg-amber-700'
                 : 'bg-black/5 hover:bg-black/10 text-[#2B2A28]'
             }`}
             title={playing ? 'Пауза (Пробел)' : 'Воспроизведение (Пробел)'}
-            aria-label={playing ? 'Пауза' : 'Воспроизведение хроники'}
+            aria-label={playing ? 'Пауза хроники' : 'Воспроизведение хроники'}
           >
-            {playing ? '⏸' : '▶'} <span className="hidden sm:inline">{playing ? 'Пауза' : 'Play'}</span>
+            <span aria-hidden="true">{playing ? '⏸' : '▶'}</span>
+            <span className="hidden sm:inline">{playing ? 'Пауза' : 'Play'}</span>
           </button>
 
           {/* Отображение текущего года */}
           <div className="flex flex-col">
-            <span className="hidden sm:inline text-[9.5px] uppercase tracking-wider text-[#6B665E] font-medium leading-none">
+            <span className="hidden sm:inline text-[9.5px] uppercase tracking-wider text-[#4A463F] font-semibold leading-none">
               Текущий год
             </span>
-            <span className="font-serif text-lg sm:text-2xl font-bold text-[#2B2A28] leading-none">
+            <span className="font-serif text-lg sm:text-2xl font-bold text-[#1F1E1D] leading-none">
               {formatYear(year)}
             </span>
           </div>
         </div>
 
-        {/* Кнопки быстрого шага с удобными тач-зонами */}
+        {/* Кнопки быстрого шага с комфортными тач-зонами (min-h 44px) */}
         <div className="flex items-center gap-1">
           <button
             onClick={() => setYear(Math.max(-2000, year - 1))}
-            className="cursor-pointer min-h-[36px] min-w-[32px] px-2 py-1 text-xs rounded-lg bg-black/5 hover:bg-black/10 active:bg-black/15 font-semibold text-[#2B2A28] focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+            className="cursor-pointer min-h-[44px] min-w-[36px] sm:min-w-[34px] px-2 py-1 text-xs rounded-lg bg-black/5 hover:bg-black/10 active:bg-black/15 font-semibold text-[#1F1E1D] flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D]"
             title="-1 год (Клавиша ←)"
             aria-label="Назад на 1 год"
           >
@@ -185,7 +186,7 @@ export function Timeline() {
           </button>
           <button
             onClick={() => setYear(Math.min(2026, year + 1))}
-            className="cursor-pointer min-h-[36px] min-w-[32px] px-2 py-1 text-xs rounded-lg bg-black/5 hover:bg-black/10 active:bg-black/15 font-semibold text-[#2B2A28] focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+            className="cursor-pointer min-h-[44px] min-w-[36px] sm:min-w-[34px] px-2 py-1 text-xs rounded-lg bg-black/5 hover:bg-black/10 active:bg-black/15 font-semibold text-[#1F1E1D] flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D]"
             title="+1 год (Клавиша →)"
             aria-label="Вперёд на 1 год"
           >
@@ -193,7 +194,7 @@ export function Timeline() {
           </button>
           <button
             onClick={() => setYear(Math.max(-2000, year - 25))}
-            className="cursor-pointer min-h-[36px] min-w-[34px] px-2 py-1 text-xs rounded-lg bg-black/5 hover:bg-black/10 active:bg-black/15 font-medium text-[#5E5951] focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+            className="cursor-pointer min-h-[44px] min-w-[40px] sm:min-w-[36px] px-2 py-1 text-xs rounded-lg bg-black/5 hover:bg-black/10 active:bg-black/15 font-medium text-[#4A463F] flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D]"
             title="-25 лет (Shift + ←)"
             aria-label="Назад на 25 лет"
           >
@@ -201,7 +202,7 @@ export function Timeline() {
           </button>
           <button
             onClick={() => setYear(Math.min(2026, year + 25))}
-            className="cursor-pointer min-h-[36px] min-w-[34px] px-2 py-1 text-xs rounded-lg bg-black/5 hover:bg-black/10 active:bg-black/15 font-medium text-[#5E5951] focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+            className="cursor-pointer min-h-[44px] min-w-[40px] sm:min-w-[36px] px-2 py-1 text-xs rounded-lg bg-black/5 hover:bg-black/10 active:bg-black/15 font-medium text-[#4A463F] flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D]"
             title="+25 лет (Shift + →)"
             aria-label="Вперёд на 25 лет"
           >
@@ -296,12 +297,12 @@ export function Timeline() {
                 }}
                 onPointerEnter={() => setHoveredEvent(ev)}
                 onPointerLeave={() => setHoveredEvent(null)}
-                className={`absolute top-1.5 h-2 rounded transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:z-30 ${
+                className={`absolute top-1.5 h-2 rounded transition-all cursor-pointer after:absolute after:-inset-y-2 after:inset-x-0 after:content-[''] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D] focus-visible:z-30 ${
                   isPlanned
                     ? 'border-2 border-dashed border-[#C0825A] bg-[#C0825A]/25'
                     : isSelected
-                    ? 'bg-[#2B2A28] border border-black z-10 scale-y-125'
-                    : 'bg-[#6B665E]/40 hover:bg-[#2B2A28]/70 border border-black/10'
+                    ? 'bg-[#1F1E1D] border border-black z-10 scale-y-125'
+                    : 'bg-[#5E5951]/40 hover:bg-[#1F1E1D]/70 border border-black/10'
                 }`}
                 style={{
                   left: `${left}%`,
@@ -337,12 +338,12 @@ export function Timeline() {
                 }}
                 onPointerEnter={() => setHoveredEvent(ev)}
                 onPointerLeave={() => setHoveredEvent(null)}
-                className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full cursor-pointer transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:z-30 ${
+                className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full cursor-pointer transition-all after:absolute after:-inset-3 after:content-[''] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D] focus-visible:z-30 ${
                   isPlanned
                     ? 'w-2.5 h-2.5 border-2 border-dashed border-[#D9A441] bg-white'
                     : isSelected
-                    ? 'w-3.5 h-3.5 bg-[#2B2A28] ring-2 ring-white z-10 scale-125 shadow-sm'
-                    : 'w-2 h-2 sm:w-1.5 sm:h-1.5 bg-[#4F8A8B] hover:bg-[#2B2A28] hover:scale-150'
+                    ? 'w-3.5 h-3.5 bg-[#1F1E1D] ring-2 ring-white z-10 scale-125 shadow-sm'
+                    : 'w-2 h-2 sm:w-1.5 sm:h-1.5 bg-[#2C6466] hover:bg-[#1F1E1D] hover:scale-150'
                 }`}
                 style={{ left: `${left}%` }}
                 title={`${ev.date}: ${ev.title}${isPlanned ? ' (планируемое)' : ''}`}
@@ -352,7 +353,7 @@ export function Timeline() {
 
           {/* Бегунок текущего года (Thumb) с увеличенной тач-зоной на мобильных */}
           <div
-            className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex items-center justify-center transition-transform z-20 pointer-events-none ${
+            className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex items-center justify-center transition-transform z-20 pointer-events-none after:absolute after:-inset-3.5 after:content-[''] ${
               isDragging ? 'scale-110' : ''
             }`}
             style={{ left: `${currentPos * 100}%` }}
@@ -377,8 +378,8 @@ export function Timeline() {
           </div>
         </div>
 
-        {/* 3. Метки ключевых годов по шкале (адаптивная фильтрация для 360px) */}
-        <div className="relative h-3 mt-0.5 text-[8.5px] sm:text-[9.5px] text-[#6B665E]">
+        {/* 3. Метки ключевых годов по шкале (высокий контраст AA/AAA) */}
+        <div className="relative h-3 mt-0.5 text-[8.5px] sm:text-[9.5px] text-[#3E3A33] font-medium">
           {keyStops.map((stop) => {
             const pos = toPos(stop.year);
             const isEdgeLeft = pos < 0.05;
@@ -387,7 +388,7 @@ export function Timeline() {
               <span
                 key={stop.year}
                 onClick={() => setYear(stop.year)}
-                className={`absolute top-0 cursor-pointer hover:text-[#2B2A28] transition-colors ${
+                className={`absolute top-0 cursor-pointer hover:text-black transition-colors ${
                   !stop.mobile ? 'hidden sm:inline' : 'inline'
                 }`}
                 style={{
@@ -408,13 +409,13 @@ export function Timeline() {
 
       {/* Правая группа: эпоха (скрыта на экранах < 1024px) */}
       <div className="hidden lg:flex flex-col items-end min-w-[170px] text-right">
-        <div className="text-[10px] uppercase tracking-wider text-[#6B665E] font-medium">
+        <div className="text-[10px] uppercase tracking-wider text-[#4A463F] font-semibold">
           Эпоха
         </div>
-        <div className="text-xs font-semibold text-[#2B2A28] truncate max-w-[200px]">
+        <div className="text-xs font-semibold text-[#1F1E1D] truncate max-w-[200px]">
           {activeEra?.title ?? '—'}
         </div>
-        <div className="text-[10px] text-[#8C867D] mt-0.5">
+        <div className="text-[10px] text-[#5E5951] mt-0.5">
           Клавиши: <kbd className="px-1 py-0.2 bg-black/5 rounded">←</kbd>{' '}
           <kbd className="px-1 py-0.2 bg-black/5 rounded">→</kbd> (Shift: ±25)
         </div>
