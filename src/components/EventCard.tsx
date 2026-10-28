@@ -42,14 +42,14 @@ export function EventCard({ event, isSelected, onSelect }: EventCardProps) {
           onSelect(event.id);
         }
       }}
-      className={`relative cursor-pointer rounded-[14px] p-3.5 transition-colors border-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
+      className={`relative cursor-pointer rounded-[14px] p-2.5 sm:p-3 transition-colors border-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
         isSelected
           ? 'bg-white border-[#2C6466] shadow-md ring-2 ring-[#2C6466]/20'
           : 'bg-[#FDFBF7] border-black/5 hover:bg-white hover:border-black/15 hover:shadow-sm'
       }`}
     >
       {/* Шапка карточки: категория, дата и бейдж достоверности с тултипом */}
-      <header className="flex items-center justify-between gap-2 mb-1.5 flex-wrap">
+      <header className="flex items-center justify-between gap-2 mb-1 flex-wrap">
         <div className="flex items-center gap-1.5">
           {/* Цветная точка категории */}
           <span
@@ -57,7 +57,7 @@ export function EventCard({ event, isSelected, onSelect }: EventCardProps) {
             style={{ backgroundColor: cat.color }}
             title={`Категория: ${cat.label}`}
           />
-          <span className="text-[11px] font-medium text-[#5C5851] uppercase tracking-wider">
+          <span className="text-[10.5px] font-medium text-[#5C5851] uppercase tracking-wider">
             {cat.label}
           </span>
         </div>
@@ -71,7 +71,7 @@ export function EventCard({ event, isSelected, onSelect }: EventCardProps) {
             tabIndex={0}
             role="note"
             aria-label={`Достоверность: ${cert.label}. ${cert.tooltip}`}
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-medium border cursor-help transition-all ${cert.bgClass} ${cert.textClass} ${cert.borderClass}`}
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border cursor-help transition-all ${cert.bgClass} ${cert.textClass} ${cert.borderClass}`}
           >
             <span aria-hidden="true">{cert.icon}</span>
             <span>{cert.label}</span>
@@ -98,19 +98,19 @@ export function EventCard({ event, isSelected, onSelect }: EventCardProps) {
         <span className="block text-xs font-serif font-bold text-[#2C6466]">
           {event.date}
           {event.planned && (
-            <span className="ml-1.5 text-[10px] text-amber-800 font-sans font-medium px-1.5 py-0.2 bg-amber-50 rounded border border-amber-200">
+            <span className="ml-1.5 text-[9.5px] text-amber-800 font-sans font-medium px-1.5 py-0.2 bg-amber-50 rounded border border-amber-200">
               планируемое
             </span>
           )}
         </span>
-        <h3 className="text-sm font-semibold text-[#2B2A28] leading-snug mt-0.5">
+        <h3 className="text-[13.5px] font-semibold text-[#2B2A28] leading-snug mt-0.5">
           {event.title}
         </h3>
       </hgroup>
 
       {/* Описание события (summary) */}
       <p
-        className={`mt-1.5 text-xs text-[#6B665E] leading-relaxed transition-all ${
+        className={`mt-1 text-xs text-[#6B665E] leading-relaxed transition-all ${
           isSelected ? 'line-clamp-none text-[#2B2A28]' : 'line-clamp-2'
         }`}
       >

@@ -1,6 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { LazyMotion } from 'framer-motion';
-import { eraForYear } from './lib/data';
 import { RulerColumn } from './components/RulerColumn';
 import { Timeline } from './components/Timeline';
 import { EventList } from './components/EventList';
@@ -25,7 +24,6 @@ const AboutModal = lazy(() =>
 
 export default function App() {
   const {
-    year,
     showModernBorders,
     toggleModernBorders,
     showNeighbors,
@@ -111,8 +109,6 @@ export default function App() {
       clearTimeout(timer);
     };
   }, []);
-
-  const activeEra = eraForYear(year);
 
   return (
     <LazyMotion features={loadFeatures} strict={false}>
@@ -208,42 +204,78 @@ export default function App() {
           </div>
         </div>
 
-        {/* ДЕСКТОПНАЯ ВЕРСИЯ ВЕРХНЕЙ СТРОКИ (hidden md:flex) */}
-        <div className="pointer-events-auto hidden md:flex items-center gap-2 flex-wrap justify-center max-w-full">
-          <SearchBox />
+        {/* ДЕСКТОПНАЯ ВЕРСИЯ ВЕРХНЕЙ СТРОКИ (hidden md:flex): 1-й уровень хеддера */}
+        <div className="pointer-events-auto hidden md:flex items-center justify-between w-full max-w-7xl mx-auto">
+          {/* Слева: Поле поиска */}
+          <div className="flex-1 max-w-xs lg:max-w-sm">
+            <SearchBox />
+          </div>
 
-          <div className="bg-[#FDFBF7] px-3.5 py-1.5 rounded-full shadow-[0_2px_12px_rgba(0,0,0,0.06)] border border-black/5 text-xs text-[#4A463F] flex items-center gap-2.5">
+          {/* Справа: Переключатель границ, О проекте, иконка информации с тултипом */}
+          <div className="flex items-center gap-2">
+            {/* Переключатель «Границы: Выкл/Вкл» */}
             <button
-              onClick={() => setShowAboutModal(true)}
-              className="cursor-pointer text-[11px] text-[#4A463F] hover:text-[#1F1E1D] transition-colors flex items-center gap-1 shrink-0 px-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D]"
-              title="Нажмите, чтобы прочитать о проекте, источниках, лицензиях и точности дат"
+              onClick={toggleModernBorders}
+              aria-pressed={showModernBorders}
+              className={`cursor-pointer px-3 py-1.5 rounded-full text-xs font-semibold shadow-xs border transition-all flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D] active:scale-95 ${
+                showModernBorders
+                  ? 'bg-[#1F1E1D] text-white border-black'
+                  : 'bg-[#FDFBF7] text-[#4A463F] border-black/10 hover:bg-white hover:text-[#1F1E1D]'
+              }`}
+              title="Современные государственные границы Кыргызской Республики"
+              aria-label="Переключить показ современных границ"
             >
-              <span>Границы схематичны. Даты до XIX века приблизительны</span>
-              <span className="text-xs">ℹ️</span>
-            </button>
-            {activeEra && (
-              <span
-                className="px-2.5 py-0.5 rounded-full bg-black/5 border border-black/10 text-[#1F1E1D] text-[10.5px] font-semibold shrink-0 flex items-center gap-1.5"
-              >
-                <span
-                  className="w-2 h-2 rounded-full shrink-0"
-                  style={{ backgroundColor: activeEra.color }}
-                />
-                <span>{activeEra.title}</span>
+              <span>🌐</span>
+              <span>Границы:</span>
+              <span className={showModernBorders ? 'text-white font-bold' : 'text-[#6B665E]'}>
+                {showModernBorders ? 'Вкл' : 'Выкл'}
               </span>
-            )}
+            </button>
+
+            {/* Кнопка «О проекте» */}
             <button
               onClick={() => setShowAboutModal(true)}
-              className="cursor-pointer px-2.5 py-0.5 rounded-full text-[11px] font-medium transition-all border bg-black/5 text-[#4A463F] hover:bg-black/10 hover:text-[#1F1E1D] border-black/10 items-center gap-1 shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D] flex"
+              className="cursor-pointer px-3 py-1.5 rounded-full text-xs font-medium transition-all border bg-[#FDFBF7] text-[#4A463F] hover:bg-white hover:text-[#1F1E1D] border-black/10 flex items-center gap-1.5 shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D] active:scale-95"
               title="О проекте, источниках, лицензиях и авторах фото"
+              aria-label="О проекте"
             >
               <span>ℹ️</span>
               <span>О проекте</span>
             </button>
+
+            {/* Компактная иконка информации (i) с тултипом дисклеймера при наведении */}
+            <div className="relative group/disclaimer">
+              <button
+                type="button"
+                onClick={() => setShowAboutModal(true)}
+                className="cursor-help w-8 h-8 rounded-full border border-black/10 bg-[#FDFBF7] hover:bg-white text-[#4A463F] hover:text-[#1F1E1D] flex items-center justify-center text-xs shadow-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D]"
+                aria-label="Информация о точности границ и дат"
+              >
+                <span>ℹ️</span>
+              </button>
+
+              {/* Всплывающий дисклеймер (заменяет постоянную длинную плашку) */}
+              <div
+                role="tooltip"
+                className="pointer-events-none absolute right-0 top-full mt-2 hidden group-hover/disclaimer:block group-focus-within/disclaimer:block w-72 p-2.5 rounded-xl bg-[#2B2A28] text-white text-xs leading-relaxed shadow-xl border border-white/10 z-50 text-left backdrop-blur-sm"
+              >
+                <div className="font-semibold text-white/90 mb-1 flex items-center gap-1.5">
+                  <span>⚠️</span>
+                  <span>Историческая справка</span>
+                </div>
+                <p className="text-white/80 text-[11.5px] leading-snug">
+                  Границы схематичны. Даты до XIX века приблизительны.
+                </p>
+                <div className="mt-1.5 pt-1 border-t border-white/10 text-[10.5px] text-[#A8C7C7]">
+                  Кликните для подробной информации о проекте
+                </div>
+              </div>
+            </div>
+
             {isDebugAllowed && (
               <button
                 onClick={() => setShowDebugLayers(true)}
-                className="cursor-pointer px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium text-purple-800 hover:text-purple-950 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors shadow-xs shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-800"
+                className="cursor-pointer px-2.5 py-1 rounded-full text-[10px] font-mono font-medium text-purple-800 hover:text-purple-950 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition-colors shadow-xs shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-800"
                 title="Открыть режим отладки слоёв GeoJSON (?debug=layers)"
                 aria-label="Режим отладки слоёв GeoJSON"
               >
@@ -253,8 +285,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* Чипы эпох (EraChips) */}
-        <div className="pointer-events-auto w-full flex justify-center">
+        {/* 2-й уровень хеддера: Чипы эпох (EraChips) */}
+        <div className="pointer-events-auto w-full flex justify-center max-w-7xl mx-auto">
           <EraChips />
         </div>
       </header>

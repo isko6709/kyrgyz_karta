@@ -226,43 +226,6 @@ export function NeighborsLayer() {
             'line-opacity-transition': { duration: 500, delay: 0 },
           }}
         />
-        <Layer
-          id="context-a-labels"
-          type="symbol"
-          maxzoom={7}
-          layout={{
-            'text-field': ['get', 'NAME'],
-            'text-font': ['Noto Sans Regular'],
-            'text-size': [
-              'step',
-              ['zoom'],
-              // При zoom < 4 — только крупные государства (area >= 70)
-              ['case', ['get', 'is_major'], 10, 0],
-              // При zoom 4..5 — средние и крупные государства (area >= 12)
-              4,
-              ['case', ['>=', ['coalesce', ['get', 'area'], 0], 12], 10, 0],
-              // При zoom >= 5 — все государства
-              5,
-              9.5,
-            ],
-            'text-transform': 'uppercase',
-            'text-letter-spacing': 0.08,
-            'text-max-width': 10,
-            'text-padding': 5,
-            'symbol-avoid-edges': true,
-            'text-allow-overlap': false,
-            'text-ignore-placement': false,
-            'symbol-sort-key': ['coalesce', ['get', 'sort_key'], 10000000],
-          }}
-          paint={{
-            'text-color': '#5E5951',
-            'text-halo-color': 'rgba(255, 255, 255, 0.95)',
-            'text-halo-width': 2.2,
-            'text-halo-blur': 1.0,
-            'text-opacity': isA ? 0.8 : 0,
-            'text-opacity-transition': { duration: 500, delay: 0 },
-          }}
-        />
       </Source>
 
       {/* Слот B: GeoJSON-источник и слои */}
@@ -284,43 +247,6 @@ export function NeighborsLayer() {
             'line-width': 0.8,
             'line-opacity': isB ? 0.45 : 0,
             'line-opacity-transition': { duration: 500, delay: 0 },
-          }}
-        />
-        <Layer
-          id="context-b-labels"
-          type="symbol"
-          maxzoom={7}
-          layout={{
-            'text-field': ['get', 'NAME'],
-            'text-font': ['Noto Sans Regular'],
-            'text-size': [
-              'step',
-              ['zoom'],
-              // При zoom < 4 — только крупные государства (area >= 70)
-              ['case', ['get', 'is_major'], 10, 0],
-              // При zoom 4..5 — средние и крупные государства (area >= 12)
-              4,
-              ['case', ['>=', ['coalesce', ['get', 'area'], 0], 12], 10, 0],
-              // При zoom >= 5 — все государства
-              5,
-              9.5,
-            ],
-            'text-transform': 'uppercase',
-            'text-letter-spacing': 0.08,
-            'text-max-width': 10,
-            'text-padding': 5,
-            'symbol-avoid-edges': true,
-            'text-allow-overlap': false,
-            'text-ignore-placement': false,
-            'symbol-sort-key': ['coalesce', ['get', 'sort_key'], 10000000],
-          }}
-          paint={{
-            'text-color': '#5E5951',
-            'text-halo-color': 'rgba(255, 255, 255, 0.95)',
-            'text-halo-width': 2.2,
-            'text-halo-blur': 1.0,
-            'text-opacity': isB ? 0.8 : 0,
-            'text-opacity-transition': { duration: 500, delay: 0 },
           }}
         />
       </Source>

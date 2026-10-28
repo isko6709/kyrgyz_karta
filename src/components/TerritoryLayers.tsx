@@ -2,10 +2,54 @@ import { useEffect, useState, useMemo } from 'react';
 import { Source, Layer, Popup, useMap } from 'react-map-gl/maplibre';
 import type { MapLayerMouseEvent } from 'maplibre-gl';
 import type { Feature, FeatureCollection } from 'geojson';
-import { layers, layersForYear, eraForYear } from '../lib/data';
+import { layers, layersForYear, eraForYear, eventsForYear } from '../lib/data';
 import { useStore } from '../store';
 import { loadLayerGeoJson, getCachedLayer, subscribeLayerCache } from '../lib/layersCache';
 import { computeGeometryArea } from '../lib/contextCache';
+
+/**
+ * Вычисляет приближенную площадь замкнутого контура (ring)
+ */
+function computeRingArea(ring: number[][]): number {
+  let area = 0;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const p1 = ring[j];
+    const p2 = ring[i];
+    area += (p1[0] * p2[1] - p2[0] * p1[1]);
+  }
+  return Math.abs(area / 2);
+}
+
+/**
+ * Вычисляет визуальный центр (центроид или bbox-центр) замкнутого кольца
+ */
+function getRingCenter(ring: number[][]): [number, number] {
+  let area = 0;
+  let cx = 0;
+  let cy = 0;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const p1 = ring[j];
+    const p2 = ring[i];
+    const f = (p1[0] * p2[1] - p2[0] * p1[1]);
+    area += f;
+    cx += (p1[0] + p2[0]) * f;
+    cy += (p1[1] + p2[1]) * f;
+  }
+  area = area / 2;
+  if (Math.abs(area) < 1e-6) {
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const [x, y] of ring) {
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+    return [(minX + maxX) / 2, (minY + maxY) / 2];
+  }
+  cx = cx / (6 * area);
+  cy = cy / (6 * area);
+  return [cx, cy];
+}
 
 /**
  * Преобразует HEX-цвет в [H, S, L]
@@ -283,8 +327,104 @@ export function TerritoryLayers() {
     };
   }, [activeLayers, eraColor, highlightedLayerId, debugSelectedLayerId, cacheRevision]);
 
+  // Собираем отдельный GeoJSON для текстовых подписей: строго ОДНА точка (Point) на каждое
+  // государство на его крупнейшем полигоне с защитой от коллизий с маркерами событий
+  const labelsGeojson = useMemo<FeatureCollection>(() => {
+    const labelFeatures: Feature[] = [];
+    const activeEventsList = eventsForYear(year);
+
+    for (let i = 0; i < activeLayers.length; i++) {
+      const l = activeLayers[i];
+      const isHighlighted = l.id === highlightedLayerId;
+      const cachedEntry = getCachedLayer(l.id);
+      const cached = cachedEntry.status === 'loaded' ? cachedEntry.data : null;
+
+      if (!cached) continue;
+
+      const feat =
+        cached.type === 'FeatureCollection' && cached.features.length > 0
+          ? cached.features[0]
+          : cached.type === 'Feature'
+          ? cached
+          : null;
+
+      if (!feat || !feat.geometry) continue;
+
+      const geom = feat.geometry as { type: string; coordinates: unknown };
+      let bestRing: number[][] | null = null;
+
+      if (geom.type === 'Polygon') {
+        const rings = geom.coordinates as number[][][];
+        if (rings && rings.length > 0) {
+          bestRing = rings[0];
+        }
+      } else if (geom.type === 'MultiPolygon') {
+        const polygons = geom.coordinates as number[][][][];
+        if (polygons && polygons.length > 0) {
+          let maxArea = -1;
+          for (const poly of polygons) {
+            if (poly && poly.length > 0) {
+              const a = computeRingArea(poly[0]);
+              if (a > maxArea) {
+                maxArea = a;
+                bestRing = poly[0];
+              }
+            }
+          }
+        }
+      }
+
+      if (!bestRing || bestRing.length < 3) continue;
+
+      let [lng, lat] = getRingCenter(bestRing);
+
+      // Проверка наложения на маркеры событий: сдвигаем подпись по широте, чтобы маркер не закрывал текст
+      for (const ev of activeEventsList) {
+        const evLat = ev.coords[0];
+        const evLng = ev.coords[1];
+        const dLng = Math.abs(lng - evLng);
+        const dLat = Math.abs(lat - evLat);
+        if (dLng < 1.5 && dLat < 0.95) {
+          if (evLat >= lat) {
+            lat -= 0.85;
+          } else {
+            lat += 0.85;
+          }
+        }
+      }
+
+      const area = Math.round(computeGeometryArea(geom) * 10) / 10;
+      const sortKey = 10000000 - Math.min(10000000, Math.round(area * 100));
+      const isMajor = area >= 20;
+      const shortTitle = (l.shortTitle || l.title).toUpperCase();
+
+      labelFeatures.push({
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: [lng, lat],
+        },
+        properties: {
+          id: l.id,
+          title: l.title,
+          shortTitle,
+          mapLabel: shortTitle,
+          isMajor,
+          isHighlighted,
+          sortKey,
+        },
+      });
+    }
+
+    return {
+      type: 'FeatureCollection',
+      features: labelFeatures,
+    };
+  }, [activeLayers, year, highlightedLayerId, cacheRevision]);
+
   return (
     <>
+      {/* 1. Полигоны заливки и контуров */}
       <Source id="territories-source" type="geojson" data={geojson}>
         {/* Заливка фокусного государства: fill-opacity ~0.45, при подсветке 0.65 */}
         <Layer
@@ -334,15 +474,10 @@ export function TerritoryLayers() {
             ],
           }}
         />
+      </Source>
 
-        {/* Подписи слоёв на карте:
-            - shortTitle (до 22 символов) заглавными буквами
-            - для ориентировочных: пометка (ОРИЕНТИРОВОЧНАЯ ОБЛАСТЬ, НЕ ГРАНИЦА ГОСУДАРСТВА)
-            - не обрезаются (symbol-avoid-edges: true, text-max-width: 12)
-            - не налезают (text-allow-overlap: false, symbol-sort-key по площади)
-            - при zoom < 4 — только крупные (area >= 20)
-            - halo для максимальной читаемости (2.6px halo с размытием 1.0)
-        */}
+      {/* 2. Строго единичные подписи государств на крупнейшем полигоне (без дубликатов и с читаемым ореолом) */}
+      <Source id="territories-labels-source" type="geojson" data={labelsGeojson}>
         <Layer
           id="territories-labels"
           type="symbol"
@@ -359,7 +494,7 @@ export function TerritoryLayers() {
             'text-transform': 'uppercase',
             'text-letter-spacing': 0.08,
             'text-max-width': 12,
-            'text-padding': 6,
+            'text-padding': 8,
             'symbol-avoid-edges': true,
             'text-allow-overlap': false,
             'text-ignore-placement': false,
@@ -367,8 +502,8 @@ export function TerritoryLayers() {
           }}
           paint={{
             'text-color': '#1F1E1D',
-            'text-halo-color': 'rgba(255, 255, 255, 0.95)',
-            'text-halo-width': 2.6,
+            'text-halo-color': 'rgba(255, 255, 255, 0.98)',
+            'text-halo-width': 3.0,
             'text-halo-blur': 1.0,
             'text-opacity': 0.95,
           }}

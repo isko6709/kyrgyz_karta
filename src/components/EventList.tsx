@@ -5,6 +5,16 @@ import { useStore } from '../store';
 import { EventCard, CATEGORY_CONFIG, CERTAINTY_CONFIG } from './EventCard';
 import type { HistEvent } from '../types';
 
+function pluralizeEvents(n: number): string {
+  const abs = Math.abs(n);
+  const mod10 = abs % 10;
+  const mod100 = abs % 100;
+  if (mod100 >= 11 && mod100 <= 19) return `${n} событий`;
+  if (mod10 === 1) return `${n} событие`;
+  if (mod10 >= 2 && mod10 <= 4) return `${n} события`;
+  return `${n} событий`;
+}
+
 export function EventList() {
   const {
     year,
@@ -120,7 +130,7 @@ export function EventList() {
     <>
       {/* 1. ДЕСКТОПНАЯ ПАНЕЛЬ (правая колонка: >= 768px) */}
       <section
-        className="hidden md:flex absolute right-4 top-14 bottom-32 w-80 md:w-96 z-10 flex-col pointer-events-none"
+        className="hidden md:flex absolute right-4 top-[88px] bottom-32 w-80 md:w-96 z-10 flex-col pointer-events-none"
         aria-label="Хроника исторических событий"
       >
         <div className="pointer-events-auto flex-1 flex flex-col bg-[#FDFBF7] rounded-[16px] shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-black/5 p-4 overflow-hidden">
@@ -132,7 +142,7 @@ export function EventList() {
               </span>
               <h2 className="text-base font-serif font-bold text-[#1F1E1D] leading-tight">
                 {exactYearCount > 0
-                  ? `${exactYearCount} ${exactYearCount === 1 ? 'событие' : 'события'} (${year < 0 ? `${Math.abs(year)} до н.э.` : `${year} г.`})`
+                  ? `${pluralizeEvents(exactYearCount)} (${year < 0 ? `${Math.abs(year)} до н.э.` : `${year} г.`})`
                   : activeEra?.title ?? 'Все эпохи'}
               </h2>
             </div>
@@ -154,10 +164,10 @@ export function EventList() {
             </div>
           </header>
 
-          {/* Прокручиваемый список карточек событий */}
+          {/* Прокручиваемый список карточек событий (компактные отступы gap-2) */}
           <div
             ref={listRef}
-            className="flex-1 overflow-y-auto mt-3 pr-1 space-y-3"
+            className="flex-1 overflow-y-auto mt-2.5 pr-1 space-y-2"
             tabIndex={0}
             aria-label="Список исторических событий"
           >

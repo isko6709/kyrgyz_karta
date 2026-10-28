@@ -67,7 +67,7 @@ export function RulerColumn() {
     <>
       {/* 1. Десктопная колонка (слева) */}
       <aside
-        className="hidden md:flex absolute left-4 top-14 bottom-32 w-72 md:w-80 z-10 flex-col pointer-events-none"
+        className="hidden md:flex absolute left-4 top-[88px] bottom-32 w-72 md:w-80 z-10 flex-col pointer-events-none"
         aria-label="Правители и исторические деятели"
       >
         <div className="pointer-events-auto flex-1 flex flex-col bg-[#FDFBF7] rounded-[16px] shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-black/5 p-4 overflow-hidden">
@@ -98,13 +98,13 @@ export function RulerColumn() {
               </div>
             )}
 
-            {/* Дополнительные слои мелким интерактивным списком */}
+            {/* Дополнительные слои мелким интерактивным списком с нормальными отступами без обрезки */}
             {otherLayers.length > 0 && (
-              <div className="mt-2 pt-2 border-t border-black/5">
+              <div className="mt-2.5 pt-2 border-t border-black/5">
                 <span className="text-[9.5px] uppercase tracking-wider text-[#5E5951] font-semibold block mb-1">
                   Также в этот период:
                 </span>
-                <ul className="space-y-0.5">
+                <ul className="space-y-2 mt-1.5">
                   {otherLayers.map((l) => {
                     const isHighlighted = l.id === highlightedLayerId;
                     return (
@@ -115,15 +115,15 @@ export function RulerColumn() {
                           }
                           aria-pressed={isHighlighted}
                           aria-label={`${l.title}: ${l.from < 0 ? `${Math.abs(l.from)} до н.э.` : l.from}–${l.to < 0 ? `${Math.abs(l.to)} до н.э.` : l.to}. Нажмите для подсветки на карте`}
-                          className={`cursor-pointer w-full text-left flex items-center justify-between text-xs px-2 py-1.5 min-h-[28px] my-0.5 rounded transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
+                          className={`cursor-pointer w-full text-left flex items-baseline justify-between gap-2 text-xs px-2.5 py-1.5 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
                             isHighlighted
                               ? 'bg-[#2C6466]/15 text-[#2B2A28] font-semibold ring-1 ring-[#2C6466]/30'
                               : 'text-[#1F1E1D] hover:bg-black/5'
                           }`}
                           title={l.note ? `${l.title}: ${l.note}` : l.title}
                         >
-                          <span className="truncate">{l.title}</span>
-                          <span className="text-[9.5px] text-[#4A463F] font-medium shrink-0 ml-1.5">
+                          <span className="font-medium leading-snug">{l.title}</span>
+                          <span className="text-[10px] text-[#5E5951] font-mono shrink-0 whitespace-nowrap">
                             {l.from < 0 ? `${Math.abs(l.from)} до н.э.` : l.from}–
                             {l.to < 0 ? `${Math.abs(l.to)} до н.э.` : l.to}
                           </span>
@@ -154,7 +154,92 @@ export function RulerColumn() {
                   для {year < 0 ? `${Math.abs(year)} г. до н.э.` : `${year} года`}.
                 </p>
               </div>
+            ) : activeRulers.length === 1 ? (
+              /* Если деятель ОДИН — рендерим аккуратную горизонтальную карточку на 100% ширины */
+              <div className="pt-1">
+                {(() => {
+                  const ruler = activeRulers[0];
+                  const isLayerActive =
+                    ruler.layer !== null && ruler.layer === highlightedLayerId;
+                  const isCulture = ruler.figureType === 'culture';
+                  const linkedLayer = ruler.layer ? layers.find((l) => l.id === ruler.layer) : null;
+                  const yearsDisplay =
+                    ruler.from !== null && ruler.to !== null
+                      ? `${ruler.from < 0 ? Math.abs(ruler.from) + ' до н.э.' : ruler.from} – ${
+                          ruler.to < 0 ? Math.abs(ruler.to) + ' до н.э.' : ruler.to
+                        }`
+                      : ruler.display;
+
+                  return (
+                    <m.button
+                      layout={!shouldReduceMotion}
+                      initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
+                      onClick={() => handleRulerClick(ruler)}
+                      aria-pressed={isLayerActive}
+                      aria-label={`${ruler.name}, ${isCulture ? 'деятель культуры' : 'правитель'}, ${ruler.display}`}
+                      className={`cursor-pointer w-full p-3 rounded-2xl transition-all flex items-center gap-3 border text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
+                        isLayerActive
+                          ? 'bg-white border-[#2C6466] ring-2 ring-[#2C6466]/30 shadow-md'
+                          : 'bg-[#FDFBF7] border-black/10 hover:bg-white hover:border-black/20 hover:shadow-sm'
+                      }`}
+                      title={
+                        linkedLayer
+                          ? `${ruler.name} (${ruler.display})\nГосударство: ${linkedLayer.title}\nНажмите для подсветки территории`
+                          : `${ruler.name} (${ruler.display})`
+                      }
+                    >
+                      {/* Аватарка слева */}
+                      <div className="shrink-0">
+                        <RulerAvatar ruler={ruler} size={58} />
+                      </div>
+
+                      {/* Текстовая информация справа */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {isCulture ? (
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold bg-amber-100 text-amber-900 border border-amber-300">
+                              📜 Культура
+                            </span>
+                          ) : (
+                            <span className="px-1.5 py-0.5 rounded-full text-[9px] font-medium text-[#5E5951] bg-black/5">
+                              Правитель
+                            </span>
+                          )}
+                          <span className="text-[11px] font-semibold text-[#2C6466]">
+                            {yearsDisplay}
+                          </span>
+                        </div>
+
+                        <h3 className="font-serif font-bold text-sm text-[#2B2A28] leading-tight mt-1">
+                          {ruler.name}
+                        </h3>
+
+                        <p className="text-[11px] text-[#5E5951] leading-snug mt-0.5 line-clamp-2">
+                          {ruler.role}
+                        </p>
+
+                        {ruler.layer && (
+                          <div className="mt-1.5 text-[9.5px] font-medium">
+                            <span
+                              className={`px-1.5 py-0.5 rounded-full ${
+                                isLayerActive
+                                  ? 'bg-[#2C6466] text-white'
+                                  : 'text-[#2C6466] bg-[#2C6466]/10'
+                              }`}
+                            >
+                              {isLayerActive ? '● Слой подсвечен' : 'Слой на карте →'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </m.button>
+                  );
+                })()}
+              </div>
             ) : (
+              /* Если деятелей 2 и больше — аккуратная сетка */
               <div className="grid grid-cols-2 gap-2.5 justify-items-center pt-1">
                 <AnimatePresence initial={false}>
                   {activeRulers.map((ruler) => {

@@ -5,8 +5,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import { useReducedMotion } from 'framer-motion';
 import { useStore } from '../store';
-import { events, eventsForYear, layersForYear, eraForYear } from '../lib/data';
-import { getClosestSnapshotYear } from '../lib/contextCache';
+import { events, eventsForYear, eraForYear } from '../lib/data';
 import { CATEGORY_CONFIG } from './EventCard';
 import { TerritoryLayers } from './TerritoryLayers';
 import { NeighborsLayer } from './NeighborsLayer';
@@ -51,13 +50,9 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
     setShowAboutModal,
   } = useStore();
   const activeEra = useMemo(() => eraForYear(year), [year]);
-  const activeLayers = useMemo(() => layersForYear(year), [year]);
-  const closestSnapshotYear = useMemo(() => getClosestSnapshotYear(year), [year]);
   const [mapMounted, setMapMounted] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [legendOpen, setLegendOpen] = useState(
-    () => (typeof window !== 'undefined' ? window.innerWidth >= 768 : true)
-  );
+  const [legendOpen, setLegendOpen] = useState(false);
   const [isMobileScreen, setIsMobileScreen] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
   );
@@ -325,121 +320,104 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
       </Map>
       )}
 
-      {/* Панель переключателей карты и легенда (десктопная версия рядом с левой колонкой) */}
-      <div className="hidden md:flex absolute top-16 left-[21.5rem] z-10 flex-col gap-1.5 pointer-events-auto">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          {/* Переключатель «Соседи» (по умолчанию включён) */}
-          <button
-            onClick={toggleNeighbors}
-            aria-pressed={showNeighbors}
-            aria-label="Соседи: переключить отображение соседних государств"
-            className={`cursor-pointer min-h-[38px] px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border transition-all flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
-              showNeighbors
-                ? 'bg-[#2B2A28] text-white border-black'
-                : 'bg-[#FDFBF7] text-[#4A463F] border-black/10 hover:bg-white hover:text-[#2B2A28]'
-            }`}
-          >
-            <span>🗺️ Соседи</span>
-            <span
-              className={`text-[9.5px] px-1.5 py-0.5 rounded font-mono ${
-                showNeighbors ? 'bg-white/20 text-white' : 'bg-black/5 text-[#4A463F]'
-              }`}
-            >
-              {showNeighbors ? 'Вкл' : 'Выкл'}
-            </span>
-          </button>
+      {/* Компактная кнопка «Слои и легенда» в левом нижнем углу над кнопками зума */}
+      <div className="hidden md:flex absolute bottom-[12.5rem] left-[21.5rem] z-10 flex-col items-start gap-2 pointer-events-auto">
+        <button
+          onClick={() => setLegendOpen((v) => !v)}
+          aria-expanded={legendOpen}
+          aria-label="Легенда и слои карты"
+          className={`cursor-pointer min-h-[34px] px-3 py-1.5 rounded-full text-xs font-semibold shadow-md border transition-all flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D] active:scale-95 ${
+            legendOpen
+              ? 'bg-[#1F1E1D] text-white border-black'
+              : 'bg-[#FDFBF7]/95 hover:bg-white text-[#2B2A28] border-black/10'
+          }`}
+        >
+          <span>🗺️</span>
+          <span>Слои и легенда</span>
+          <span className="text-[10px] opacity-60">{legendOpen ? '▲' : '▼'}</span>
+        </button>
 
-          {/* Переключатель современных границ */}
-          <button
-            onClick={toggleModernBorders}
-            aria-pressed={showModernBorders}
-            aria-label="Границы: переключить современные государственные границы"
-            className={`cursor-pointer min-h-[38px] px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border transition-all flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28] ${
-              showModernBorders
-                ? 'bg-[#2B2A28] text-white border-black'
-                : 'bg-[#FDFBF7] text-[#4A463F] border-black/10 hover:bg-white hover:text-[#2B2A28]'
-            }`}
-          >
-            <span>🌐 Границы</span>
-            <span
-              className={`text-[9.5px] px-1.5 py-0.5 rounded font-mono ${
-                showModernBorders ? 'bg-white/20 text-white' : 'bg-black/5 text-[#4A463F]'
-              }`}
-            >
-              {showModernBorders ? 'Вкл' : 'Выкл'}
-            </span>
-          </button>
-
-          {/* Кнопка сворачивания/разворачивания легенды */}
-          <button
-            onClick={() => setLegendOpen((v) => !v)}
-            aria-label={legendOpen ? 'Легенда: свернуть легенду карты' : 'Легенда: развернуть легенду карты'}
-            className="cursor-pointer min-h-[38px] px-2.5 py-1.5 rounded-full text-xs text-[#4A463F] bg-[#FDFBF7] hover:bg-white border border-black/10 shadow-sm transition-all flex items-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2B2A28]"
-          >
-            <span className="text-[11px]">{legendOpen ? '▲ Свернуть' : '▼ Легенда'}</span>
-          </button>
-        </div>
-
-        {/* Информационная легенда и атрибуция (historical-basemaps) */}
+        {/* Раскрывающаяся компактная легенда без технических параметров */}
         {legendOpen && (
-          <div className="px-3 py-2 rounded-xl bg-white/95 backdrop-blur-md shadow-md border border-black/10 text-[11px] text-[#4A463F] max-w-xs space-y-1.5 animate-fadeIn">
+          <div className="p-3.5 rounded-2xl bg-[#FDFBF7]/98 backdrop-blur-md shadow-xl border border-black/10 text-xs text-[#4A463F] w-72 space-y-2.5 animate-fadeIn">
+            <div className="flex items-center justify-between border-b border-black/5 pb-1.5">
+              <span className="text-[10.5px] font-bold text-[#1F1E1D] uppercase tracking-wider">
+                Обозначения на карте
+              </span>
+              <button
+                onClick={() => setLegendOpen(false)}
+                className="cursor-pointer text-[#8C8275] hover:text-[#1F1E1D] text-sm leading-none p-0.5 rounded hover:bg-black/5"
+                aria-label="Закрыть легенду"
+              >
+                ✕
+              </button>
+            </div>
+
             {/* Фокусное государство */}
-            <div className="flex items-start gap-2">
+            <div className="flex items-start gap-2.5">
               <span
-                className="w-3.5 h-3.5 rounded shrink-0 border-2 border-[#2B2A28] shadow-sm mt-0.5"
-                style={{ backgroundColor: activeEra?.color ?? '#4F8A8B', opacity: 0.85 }}
+                className="w-3.5 h-3.5 rounded shrink-0 border-2 border-[#2B2A28] shadow-xs mt-0.5"
+                style={{ backgroundColor: activeEra?.color ?? '#4F8A8B' }}
               />
               <div className="leading-snug">
-                <span className="font-bold text-[#1F1E1D] block">
-                  Фокус: кыргызские земли
+                <span className="font-semibold text-[#1F1E1D] block">
+                  Кыргызские земли
                 </span>
-                <span className="text-[10px] text-[#5E5951]">
-                  Эпоха: {activeEra?.title ?? '—'} (прозрачность ~0.45)
-                  {activeLayers.length > 1 && (
-                    <span className="block text-[9.5px] text-[#5E5951] italic">
-                      ({activeLayers.length} активных слоя, выделены отдельными контурами)
-                    </span>
-                  )}
+                <span className="text-[11px] text-[#5E5951]">
+                  {activeEra?.title ?? 'Исторический период'}
                 </span>
               </div>
             </div>
 
-            {/* Соседние государства */}
-            {showNeighbors && (
-              <div className="flex items-start gap-2 pt-1 border-t border-black/5">
-                <span className="w-3.5 h-3.5 rounded shrink-0 border border-[#5E5951] bg-[#D4E2D4] opacity-80 shadow-sm mt-0.5" />
-                <div className="leading-snug">
-                  <span className="font-semibold text-[#1F1E1D] block">
-                    Соседние государства
-                  </span>
-                  <span className="text-[10px] text-[#5E5951] block">
-                    Пастель (~0.18), снимок ~{closestSnapshotYear > 0 ? `${closestSnapshotYear} г.` : `${Math.abs(closestSnapshotYear)} г. до н.э.`}
-                  </span>
-                  <span className="text-[9.5px] text-[#5E5951] italic block">
-                    Наведение или клик показывает название
-                  </span>
-                </div>
+            {/* Соседние государства с переключателем */}
+            <div className="flex items-center justify-between pt-2 border-t border-black/5">
+              <div className="flex items-center gap-2">
+                <span className="w-3.5 h-3.5 rounded shrink-0 border border-[#5E5951] bg-[#D4E2D4] shadow-xs" />
+                <span className="font-medium text-[#1F1E1D]">
+                  Соседние государства
+                </span>
               </div>
-            )}
+              <button
+                onClick={toggleNeighbors}
+                aria-pressed={showNeighbors}
+                className={`cursor-pointer px-2.5 py-0.5 rounded-full text-[11px] font-semibold border transition-all ${
+                  showNeighbors
+                    ? 'bg-[#1F1E1D] text-white border-black shadow-xs'
+                    : 'bg-white text-[#5E5951] border-black/15 hover:bg-stone-50'
+                }`}
+              >
+                {showNeighbors ? 'Вкл' : 'Выкл'}
+              </button>
+            </div>
 
-            {/* Обязательная атрибуция по условиям лицензии */}
-            <div className="text-[9.5px] leading-tight text-[#5E5951] pt-1.5 border-t border-black/10 flex items-center justify-between gap-1 flex-wrap">
-              <div>
-                Границы схематичны, источник:{' '}
-                <a
-                  href="https://github.com/aourednik/historical-basemaps"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline hover:text-[#1F1E1D] font-medium"
-                >
-                  historical-basemaps
-                </a>{' '}
-                · <span className="text-[#5E5951] font-mono">GNU GPLv3</span>
+            {/* Современные границы с переключателем */}
+            <div className="flex items-center justify-between pt-2 border-t border-black/5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs">🌐</span>
+                <span className="font-medium text-[#1F1E1D]">
+                  Современные границы КР
+                </span>
               </div>
+              <button
+                onClick={toggleModernBorders}
+                aria-pressed={showModernBorders}
+                className={`cursor-pointer px-2.5 py-0.5 rounded-full text-[11px] font-semibold border transition-all ${
+                  showModernBorders
+                    ? 'bg-[#1F1E1D] text-white border-black shadow-xs'
+                    : 'bg-white text-[#5E5951] border-black/15 hover:bg-stone-50'
+                }`}
+              >
+                {showModernBorders ? 'Вкл' : 'Выкл'}
+              </button>
+            </div>
+
+            {/* Лаконичная атрибуция без технических терминов */}
+            <div className="text-[10px] leading-tight text-[#8C8275] pt-2 border-t border-black/10 flex items-center justify-between">
+              <span>historical-basemaps · GPLv3</span>
               <button
                 type="button"
                 onClick={() => setShowAboutModal(true)}
-                className="cursor-pointer text-[9.5px] text-[#2C6466] hover:underline font-semibold shrink-0"
+                className="cursor-pointer text-[#2C6466] hover:underline font-semibold"
               >
                 О проекте →
               </button>
