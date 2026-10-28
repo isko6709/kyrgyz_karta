@@ -1,14 +1,41 @@
 import { useEffect, useRef, useCallback, useMemo, useState } from 'react';
-import Map, { NavigationControl, Marker, type MapRef } from 'react-map-gl/maplibre';
+import Map, { NavigationControl, Marker, Popup, type MapRef } from 'react-map-gl/maplibre';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import { useReducedMotion } from 'framer-motion';
 import { useStore } from '../store';
-import { events, eventsForYear, eraForYear } from '../lib/data';
+import { events, eventsForYear, eraForYear, layers } from '../lib/data';
 import { CATEGORY_CONFIG } from './EventCard';
 import { TerritoryLayers } from './TerritoryLayers';
 import { NeighborsLayer } from './NeighborsLayer';
+import type { HistEvent } from '../types';
+
+/**
+ * Определяет историческую роль точки на карте (столица, город, битва, памятник)
+ */
+export function getEventPointType(ev: HistEvent): { label: string; icon: string } {
+  const text = `${ev.title} ${ev.summary}`.toLowerCase();
+  if (text.includes('столиц') || text.includes('ставка')) {
+    return { label: 'Столица / Ставка', icon: '🏛️' };
+  }
+  if (text.includes('город') || text.includes('крепост') || text.includes('укреплен') || text.includes('поселен')) {
+    return { label: 'Исторический город', icon: '🏰' };
+  }
+  if (ev.category === 'war' || text.includes('битв') || text.includes('сражен') || text.includes('поход') || text.includes('разгром') || text.includes('восстан')) {
+    return { label: 'Сражение / Восстание', icon: '⚔️' };
+  }
+  if (ev.category === 'trade' || text.includes('шёлковый') || text.includes('торгов') || text.includes('караван')) {
+    return { label: 'Торговый узел / Путь', icon: '🐫' };
+  }
+  if (ev.category === 'culture' || text.includes('минарет') || text.includes('комплекс') || text.includes('надпис') || text.includes('петроглиф') || text.includes('памятник') || text.includes('мавзолей')) {
+    return { label: 'Памятник культуры', icon: '📜' };
+  }
+  if (ev.category === 'state') {
+    return { label: 'Государственный центр', icon: '🏛️' };
+  }
+  return { label: CATEGORY_CONFIG[ev.category]?.label ?? 'Историческое событие', icon: '📍' };
+}
 
 // Настройка Web Worker для MapLibre GL JS v5+ в среде Vite/SPA
 maplibregl.setWorkerUrl(maplibreWorkerUrl);
@@ -165,6 +192,20 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
     return list;
   }, [year, selectedEventId]);
 
+  // Данные выбранного события для детального информационного попапа
+  const selectedEvent = useMemo(
+    () => (selectedEventId !== null ? events.find((e) => e.id === selectedEventId) ?? null : null),
+    [selectedEventId]
+  );
+  const selectedEventLinkedLayer = useMemo(
+    () => (selectedEvent?.layer ? layers.find((l) => l.id === selectedEvent.layer) ?? null : null),
+    [selectedEvent]
+  );
+  const selectedEventPointType = useMemo(
+    () => (selectedEvent ? getEventPointType(selectedEvent) : null),
+    [selectedEvent]
+  );
+
   return (
     <div
       className={`relative w-full h-full overflow-hidden bg-[#F6F1E7] ${className ?? ''}`}
@@ -239,13 +280,14 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
           </>
         )}
 
-        {/* Маркеры событий на карте */}
+        {/* Маркеры событий, городов и столиц на карте */}
         {activeEvents.map((ev) => {
           const isSelected = selectedEventId === ev.id;
           const cat = CATEGORY_CONFIG[ev.category] ?? {
             label: ev.category,
             color: '#4F8A8B',
           };
+          const pointType = getEventPointType(ev);
 
           return (
             <Marker
@@ -255,13 +297,14 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
               anchor="bottom"
               onClick={(e) => {
                 e.originalEvent.stopPropagation();
+                // Клик по маркеру выбирает событие без переключения года/эпохи!
                 selectEvent(isSelected ? null : ev.id);
               }}
             >
               <div
                 role="button"
                 tabIndex={0}
-                aria-label={`Событие на карте: ${ev.date}, ${ev.title}`}
+                aria-label={`${pointType.label}: ${ev.date}, ${ev.title}`}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
@@ -273,14 +316,11 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
                   isSelected ? 'z-50 scale-110' : 'z-20 hover:scale-125'
                 }`}
               >
-                {/* Всплывающая плашка с названием при выборе или наведении */}
-                {(isSelected || false) && (
-                  <div className="absolute -top-10 flex flex-col items-center pointer-events-none whitespace-nowrap z-50">
+                {/* Всплывающая плашка при наведении (если не открыт подробный попап) */}
+                {!isSelected && (
+                  <div className="absolute -top-9 hidden group-hover:flex flex-col items-center pointer-events-none whitespace-nowrap z-50 animate-fadeIn">
                     <div className="px-2.5 py-1 rounded-lg bg-[#2B2A28] text-white text-[11px] font-medium shadow-xl flex items-center gap-1.5 border border-white/20">
-                      <span
-                        className="w-2 h-2 rounded-full shrink-0"
-                        style={{ backgroundColor: cat.color }}
-                      />
+                      <span>{pointType.icon}</span>
                       <span>{ev.date}: {ev.title}</span>
                     </div>
                     {/* Треугольный указатель вниз */}
@@ -296,7 +336,7 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
                   />
                 )}
 
-                {/* Сам значок маркера (булавка) */}
+                {/* Сам значок маркера с иконкой типа при выборе */}
                 <div
                   className={`flex items-center justify-center rounded-full transition-all shadow-md ${
                     isSelected
@@ -308,15 +348,72 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
                     ...(isSelected ? { ringColor: `${cat.color}60` } : {}),
                   }}
                 >
-                  <div
-                    className={`rounded-full ${isSelected ? 'w-3.5 h-3.5' : 'w-2 h-2'}`}
-                    style={{ backgroundColor: cat.color }}
-                  />
+                  {isSelected ? (
+                    <span className="text-xs leading-none select-none">{pointType.icon}</span>
+                  ) : (
+                    <div
+                      className="rounded-full w-2 h-2"
+                      style={{ backgroundColor: cat.color }}
+                    />
+                  )}
                 </div>
               </div>
             </Marker>
           );
         })}
+
+        {/* Информационный попап выбранного события/города/столицы на карте (без сброса года и эпохи) */}
+        {selectedEvent && selectedEventPointType && (
+          <Popup
+            longitude={selectedEvent.coords[1]}
+            latitude={selectedEvent.coords[0]}
+            closeButton={true}
+            closeOnClick={false}
+            onClose={() => selectEvent(null)}
+            anchor="bottom"
+            offset={28}
+          >
+            <div className="p-3 bg-[#FDFBF7] rounded-xl shadow-xl border border-black/10 max-w-[280px] sm:max-w-xs text-left select-none animate-fadeIn">
+              {/* Бейдж типа (Столица, Город, Сражение, Памятник) и дата */}
+              <div className="flex items-center justify-between gap-1.5 mb-1.5 flex-wrap">
+                <span
+                  className="px-2 py-0.5 rounded-full text-[10px] font-semibold flex items-center gap-1 shadow-xs"
+                  style={{
+                    backgroundColor: `${CATEGORY_CONFIG[selectedEvent.category]?.color ?? '#2C6466'}15`,
+                    color: CATEGORY_CONFIG[selectedEvent.category]?.color ?? '#2C6466',
+                    border: `1px solid ${CATEGORY_CONFIG[selectedEvent.category]?.color ?? '#2C6466'}35`,
+                  }}
+                >
+                  <span>{selectedEventPointType.icon}</span>
+                  <span>{selectedEventPointType.label}</span>
+                </span>
+                <span className="text-[11px] font-serif font-bold text-[#2C6466]">
+                  {selectedEvent.date}
+                </span>
+              </div>
+
+              {/* Название события или города/столицы */}
+              <h3 className="font-serif font-bold text-sm text-[#1F1E1D] leading-snug">
+                {selectedEvent.title}
+              </h3>
+
+              {/* Описание того, что это за место или что здесь произошло */}
+              <p className="mt-1.5 text-xs text-[#5E5951] leading-relaxed line-clamp-4">
+                {selectedEvent.summary}
+              </p>
+
+              {/* Привязанное государство / слой */}
+              {selectedEventLinkedLayer && (
+                <div className="mt-2 pt-1.5 border-t border-black/5 flex items-center justify-between text-[10.5px]">
+                  <span className="text-[#8C8275]">Государство:</span>
+                  <span className="font-semibold text-[#1F1E1D]">
+                    {selectedEventLinkedLayer.title}
+                  </span>
+                </div>
+              )}
+            </div>
+          </Popup>
+        )}
       </Map>
       )}
 

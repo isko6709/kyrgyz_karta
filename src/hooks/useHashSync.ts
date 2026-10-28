@@ -24,19 +24,18 @@ export function useHashSync() {
     const eventParam = params.get('event');
     const yearParam = params.get('year');
 
+    if (yearParam) {
+      const parsedYear = parseInt(yearParam, 10);
+      if (!isNaN(parsedYear)) {
+        setYear(parsedYear);
+      }
+    }
+
     if (eventParam) {
       const eventId = parseInt(eventParam, 10);
       const ev = events.find((e) => e.id === eventId);
       if (ev) {
         selectEvent(ev.id);
-        return;
-      }
-    }
-
-    if (yearParam) {
-      const parsedYear = parseInt(yearParam, 10);
-      if (!isNaN(parsedYear)) {
-        setYear(parsedYear);
       }
     }
   }, [selectEvent, setYear]);
@@ -46,7 +45,7 @@ export function useHashSync() {
     if (!isInitializedRef.current) return;
 
     const targetHash =
-      selectedEventId !== null ? `event=${selectedEventId}` : `year=${year}`;
+      selectedEventId !== null ? `year=${year}&event=${selectedEventId}` : `year=${year}`;
 
     const currentHash = window.location.hash.replace(/^#/, '');
     if (currentHash !== targetHash) {
@@ -64,20 +63,21 @@ export function useHashSync() {
       const eventParam = params.get('event');
       const yearParam = params.get('year');
 
-      if (eventParam) {
-        const eventId = parseInt(eventParam, 10);
-        const ev = events.find((e) => e.id === eventId);
-        if (ev) {
-          selectEvent(ev.id);
-          return;
-        }
-      }
-
       if (yearParam) {
         const parsedYear = parseInt(yearParam, 10);
         if (!isNaN(parsedYear)) {
           setYear(parsedYear);
         }
+      }
+
+      if (eventParam) {
+        const eventId = parseInt(eventParam, 10);
+        const ev = events.find((e) => e.id === eventId);
+        if (ev) {
+          selectEvent(ev.id);
+        }
+      } else if (!eventParam && selectedEventId !== null) {
+        selectEvent(null);
       }
     };
 

@@ -24,7 +24,7 @@ export interface AppState {
   showAboutModal: boolean;
 
   setYear: (year: number) => void;
-  selectEvent: (id: number | null) => void;
+  selectEvent: (id: number | null, shouldChangeYear?: boolean) => void;
   setMobileSheetOpen: (open: boolean) => void;
   togglePlay: () => void;
   setPlaying: (playing: boolean) => void;
@@ -46,7 +46,7 @@ export interface AppState {
 const INITIAL_YEAR = 840;
 const initialEra = eraForYear(INITIAL_YEAR);
 
-export const useStore = create<AppState>((set) => ({
+export const useStore = create<AppState>((set, get) => ({
   year: INITIAL_YEAR,
   selectedEventId: null,
   playing: false,
@@ -94,20 +94,35 @@ export const useStore = create<AppState>((set) => ({
     });
   },
 
-  selectEvent: (id: number | null) => {
+  selectEvent: (id: number | null, shouldChangeYear = false) => {
     if (id === null) {
       set({ selectedEventId: null, mobileSheetOpen: false });
       return;
     }
     const event = events.find((e) => e.id === id);
     if (event) {
-      const era = eraForYear(event.year);
-      set({
-        selectedEventId: id,
-        mobileSheetOpen: true,
-        year: event.year,
-        activeEraId: event.era || (era ? era.id : 'turkic'),
-      });
+      const currentYear = get().year;
+      const isWithinCurrentYear =
+        event.yearEnd !== undefined
+          ? event.year <= currentYear && currentYear <= event.yearEnd
+          : event.year === currentYear;
+
+      // Меняем год и эпоху только если это явно запрошено (например, поиск по истории).
+      // При клике по точкам на карте текущий год и эпоха НЕ СБРАСЫВАЮТСЯ!
+      if (shouldChangeYear && !isWithinCurrentYear) {
+        const era = eraForYear(event.year);
+        set({
+          selectedEventId: id,
+          mobileSheetOpen: true,
+          year: event.year,
+          activeEraId: event.era || (era ? era.id : 'turkic'),
+        });
+      } else {
+        set({
+          selectedEventId: id,
+          mobileSheetOpen: true,
+        });
+      }
     } else {
       set({ selectedEventId: id, mobileSheetOpen: true });
     }

@@ -54,7 +54,7 @@ export function SearchBox() {
   // Выбор события: ставит год, выбирает событие и вызывает flyTo
   const handleSelectEvent = (ev: HistEvent) => {
     setYear(ev.year);
-    selectEvent(ev.id);
+    selectEvent(ev.id, true);
     flyTo([ev.coords[1], ev.coords[0]], ev.zoom ?? 7, 1400);
     setIsOpen(false);
   };
