@@ -80,7 +80,7 @@ export function SearchBox() {
   };
 
   return (
-    <div ref={containerRef} className="relative w-64 sm:w-72 md:w-80 select-none">
+    <div ref={containerRef} className="relative w-full max-w-[210px] xs:max-w-xs md:w-80 select-none">
       {/* Поле ввода поиска */}
       <div className="relative flex items-center">
         <span className="absolute left-3 text-xs text-[#4A463F] pointer-events-none">
@@ -105,7 +105,7 @@ export function SearchBox() {
               setSearch('');
             }
           }}
-          placeholder="Поиск событий, ханов и деятелей..."
+          placeholder="Поиск событий, ханов..."
           className="w-full pl-8 pr-8 py-1.5 min-h-[38px] sm:min-h-[36px] rounded-full bg-[#FDFBF7] border border-black/15 shadow-sm text-xs text-[#1F1E1D] placeholder-[#4A463F] focus:outline-none focus:ring-2 focus:ring-[#2C6466]/40 focus:border-[#2C6466]"
         />
         {search && (

@@ -58,6 +58,15 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
   const [legendOpen, setLegendOpen] = useState(
     () => (typeof window !== 'undefined' ? window.innerWidth >= 768 : true)
   );
+  const [isMobileScreen, setIsMobileScreen] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => setIsMobileScreen(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Отложенный монтаж WebGL MapLibre до освобождения основного потока (устраняет блокировку FCP/TBT)
   useEffect(() => {
@@ -218,12 +227,13 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
       >
         {/* Элементы управления масштабом */}
         <NavigationControl
-          position="bottom-left"
+          position={isMobileScreen ? 'top-right' : 'bottom-left'}
           visualizePitch={true}
-          style={{
-            marginBottom: '8rem',
-            marginLeft: '21.5rem',
-          }}
+          style={
+            isMobileScreen
+              ? { marginTop: '5.75rem', marginRight: '0.5rem' }
+              : { marginBottom: '8rem', marginLeft: '21.5rem' }
+          }
         />
 
         {/* Фоновый контекст соседних государств и слои территорий (подключаются после инициализации карты) */}
@@ -315,8 +325,8 @@ export function MapView({ className, onMapLoad }: MapViewProps) {
       </Map>
       )}
 
-      {/* Панель переключателей карты и легенда (historical-basemaps) */}
-      <div className="absolute top-28 md:top-16 left-3 md:left-[21.5rem] z-10 flex flex-col gap-1.5 pointer-events-auto">
+      {/* Панель переключателей карты и легенда (десктопная версия рядом с левой колонкой) */}
+      <div className="hidden md:flex absolute top-16 left-[21.5rem] z-10 flex-col gap-1.5 pointer-events-auto">
         <div className="flex items-center gap-1.5 flex-wrap">
           {/* Переключатель «Соседи» (по умолчанию включён) */}
           <button
