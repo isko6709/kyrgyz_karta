@@ -235,120 +235,104 @@ export function RulerColumn() {
         </div>
       </aside>
 
-      {/* 2. Мобильная версия: правители и плашка государства над таймлайном */}
+      {/* 2. Мобильная версия: единая компактная панель контекста (государство, правители, хроника) над таймлайном */}
       <aside
-        className="flex md:hidden absolute bottom-[7.25rem] inset-x-0 z-20 pointer-events-none px-3"
-        aria-label="Правители и хроника (мобильная версия)"
+        className="flex md:hidden absolute bottom-[116px] inset-x-0 z-20 pointer-events-none px-2"
+        aria-label="Контекст периода: государство, правители и хроника (мобильная версия)"
       >
-        <div className="pointer-events-auto w-full flex flex-col gap-1.5">
-          {/* Верхняя строка: Название государства (слева) + Кнопка открытия хроники событий (справа) */}
-          <div className="flex items-center justify-between gap-2">
-            {/* Плашка названия государства на мобильных с возможностью подсветки */}
-            <button
-              onClick={() => {
-                if (primaryLayer) {
-                  setHighlightedLayerId(highlightedLayerId === primaryLayer.id ? null : primaryLayer.id);
-                }
-              }}
-              aria-label={`${primaryLayer ? (primaryLayer.shortTitle || primaryLayer.title) : 'Кыргызские земли'}: нажать для подсветки на карте`}
-              className={`cursor-pointer min-h-[40px] px-3 py-1 rounded-full shadow-sm border text-left text-xs transition-all flex items-center gap-1.5 max-w-[62%] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D] ${
-                primaryLayer && highlightedLayerId === primaryLayer.id
-                  ? 'bg-[#2C6466] text-white border-[#2C6466]'
-                  : 'bg-[#FDFBF7] text-[#1F1E1D] border-black/10 hover:border-black/20'
-              }`}
-            >
-              <span className="font-serif font-bold uppercase truncate">
-                {primaryLayer ? (primaryLayer.shortTitle || primaryLayer.title) : 'Кыргызские земли'}
+        <div className="pointer-events-auto w-full flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          {/* Плашка названия государства на мобильных с возможностью подсветки */}
+          <button
+            onClick={() => {
+              if (primaryLayer) {
+                setHighlightedLayerId(highlightedLayerId === primaryLayer.id ? null : primaryLayer.id);
+              }
+            }}
+            aria-label={`${primaryLayer ? (primaryLayer.shortTitle || primaryLayer.title) : 'Кыргызские земли'}: нажать для подсветки на карте`}
+            className={`cursor-pointer shrink-0 min-h-[38px] px-3 py-1 rounded-full shadow-md border text-left text-xs transition-all flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D] ${
+              primaryLayer && highlightedLayerId === primaryLayer.id
+                ? 'bg-[#2C6466] text-white border-[#2C6466]'
+                : 'bg-[#FDFBF7] text-[#1F1E1D] border-black/10 hover:border-black/20'
+            }`}
+          >
+            <span className="text-xs" aria-hidden="true">🏛️</span>
+            <span className="font-serif font-bold uppercase truncate max-w-[130px] sm:max-w-[200px]">
+              {primaryLayer ? (primaryLayer.shortTitle || primaryLayer.title) : 'Кыргызские земли'}
+            </span>
+            {isPrimaryWithoutPolygon && (
+              <span className="text-[10px] text-amber-800 bg-amber-100/90 px-1 py-0.2 rounded font-sans font-normal" title="Границы неизвестны или не восстановлены">
+                ⚠️
               </span>
-              {isPrimaryWithoutPolygon && (
-                <span className="text-[10px] text-amber-800 bg-amber-100/90 px-1.5 py-0.2 rounded border border-amber-300 shrink-0 font-sans font-normal" title="Границы неизвестны или не восстановлены">
-                  ⚠️ Без границ
-                </span>
-              )}
-              {otherLayers.length > 0 && (
-                <span className="text-[10px] opacity-75 shrink-0">
-                  +{otherLayers.length}
-                </span>
-              )}
-            </button>
+            )}
+            {otherLayers.length > 0 && (
+              <span className="text-[10px] opacity-75 font-mono">
+                +{otherLayers.length}
+              </span>
+            )}
+          </button>
 
-            {/* Кнопка открытия Bottom Sheet с событиями */}
-            <button
-              type="button"
-              onClick={() => setMobileSheetOpen(true)}
-              aria-label={`Хроника: открыть список событий (${exactYearCount})`}
-              className="cursor-pointer min-h-[40px] px-3.5 py-1.5 rounded-full bg-[#FDFBF7] shadow-sm border border-black/10 text-xs font-semibold text-[#1F1E1D] flex items-center gap-1.5 active:scale-95 transition-all shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D]"
-            >
-              <span className="text-sm">📋</span>
-              <span>Хроника</span>
-              {exactYearCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full bg-[#2C6466] text-white text-[10px] font-mono">
-                  {exactYearCount}
-                </span>
-              )}
-            </button>
-          </div>
+          {/* Горизонтальный список правителей текущего года */}
+          <AnimatePresence initial={false}>
+            {activeRulers.map((ruler) => {
+              const isLayerActive =
+                ruler.layer !== null && ruler.layer === highlightedLayerId;
+              const isCulture = ruler.figureType === 'culture';
 
-          {/* Нижняя строка: Горизонтальный скролл правителей (крупные тач-зоны min-h 46px) */}
-          {activeRulers.length > 0 && (
-            <div
-              className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5"
-              role="region"
-              aria-label="Список правителей текущего периода"
-            >
-              <AnimatePresence initial={false}>
-                {activeRulers.map((ruler) => {
-                  const isLayerActive =
-                    ruler.layer !== null && ruler.layer === highlightedLayerId;
-                  const isCulture = ruler.figureType === 'culture';
+              return (
+                <m.button
+                  key={`mob-${ruler.id}`}
+                  layout={!shouldReduceMotion}
+                  initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.9 }}
+                  transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
+                  onClick={() => handleRulerClick(ruler)}
+                  aria-pressed={isLayerActive}
+                  aria-label={`${ruler.name}: ${isCulture ? 'деятель культуры' : 'правитель'}. ${ruler.layer ? 'Подсветить территорию' : ''}`}
+                  className={`cursor-pointer shrink-0 min-h-[38px] flex items-center gap-1.5 pl-1 pr-2.5 py-0.5 rounded-full bg-[#FDFBF7] shadow-md border transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D] ${
+                    isLayerActive
+                      ? 'border-[#2C6466] ring-2 ring-[#2C6466]/30 bg-white'
+                      : 'border-black/10 hover:border-black/20'
+                  }`}
+                >
+                  <RulerAvatar ruler={ruler} size={30} compact={true} />
+                  <div className="text-left leading-none">
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs font-semibold text-[#1F1E1D] leading-tight truncate max-w-[110px]">
+                        {ruler.name}
+                      </span>
+                      {isCulture && (
+                        <span className="text-[9px]" title="Деятель культуры">📜</span>
+                      )}
+                    </div>
+                    <div className="text-[9.5px] text-[#4A463F] mt-0.5">
+                      {ruler.from !== null && ruler.to !== null
+                        ? `${ruler.from < 0 ? Math.abs(ruler.from) + ' до н.э.' : ruler.from}–${
+                            ruler.to < 0 ? Math.abs(ruler.to) + ' до н.э.' : ruler.to
+                          }`
+                        : ruler.display}
+                    </div>
+                  </div>
+                </m.button>
+              );
+            })}
+          </AnimatePresence>
 
-                  return (
-                    <m.button
-                      key={`mob-${ruler.id}`}
-                      layout={!shouldReduceMotion}
-                      initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.9 }}
-                      transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
-                      onClick={() => handleRulerClick(ruler)}
-                      aria-pressed={isLayerActive}
-                      aria-label={`${ruler.name}: ${isCulture ? 'деятель культуры' : 'правитель'}. ${ruler.layer ? 'Подсветить территорию' : ''}`}
-                      className={`cursor-pointer shrink-0 min-h-[46px] flex items-center gap-2 pl-1.5 pr-3 py-1 rounded-full bg-[#FDFBF7] shadow-sm border transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D] ${
-                        isLayerActive
-                          ? 'border-[#2C6466] ring-2 ring-[#2C6466]/30'
-                          : 'border-black/10 hover:border-black/20'
-                      }`}
-                    >
-                      <RulerAvatar ruler={ruler} size={36} compact={true} />
-                      <div className="text-left">
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs font-semibold text-[#1F1E1D] leading-tight truncate max-w-[120px]">
-                            {ruler.name}
-                          </span>
-                          {isCulture ? (
-                            <span className="shrink-0 px-1.5 py-0.2 rounded text-[8.5px] font-semibold bg-amber-100 text-amber-900 border border-amber-300">
-                              📜 Культура
-                            </span>
-                          ) : (
-                            <span className="shrink-0 px-1 py-0.2 rounded text-[8px] font-medium text-[#4A463F] bg-black/5">
-                              Правитель
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[10px] text-[#4A463F]">
-                          {ruler.from !== null && ruler.to !== null
-                            ? `${ruler.from < 0 ? Math.abs(ruler.from) + ' до н.э.' : ruler.from}–${
-                                ruler.to < 0 ? Math.abs(ruler.to) + ' до н.э.' : ruler.to
-                              }`
-                            : ruler.display}
-                        </div>
-                      </div>
-                    </m.button>
-                  );
-                })}
-              </AnimatePresence>
-            </div>
-          )}
+          {/* Кнопка открытия Bottom Sheet с событиями */}
+          <button
+            type="button"
+            onClick={() => setMobileSheetOpen(true)}
+            aria-label={`Хроника: открыть список событий (${exactYearCount})`}
+            className="cursor-pointer shrink-0 min-h-[38px] px-3 py-1 rounded-full bg-[#2C6466] text-white shadow-md border border-[#2C6466] text-xs font-semibold flex items-center gap-1.5 active:scale-95 transition-all ml-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1E1D]"
+          >
+            <span className="text-xs" aria-hidden="true">📋</span>
+            <span>Хроника</span>
+            {exactYearCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-white text-[10px] font-mono">
+                {exactYearCount}
+              </span>
+            )}
+          </button>
         </div>
       </aside>
     </>
